@@ -9,26 +9,27 @@ try:
     from urllib.parse import urlparse
 except ImportError:
     from urlparse import urlparse  # pylint: disable=import-error
+from binascii import hexlify
+from os import urandom
 import OpenSSL.crypto
-
 from msrestazure.azure_exceptions import CloudError
+from msrestazure.tools import is_valid_resource_id, parse_resource_id
 
 from azure.mgmt.storage import StorageManagementClient
 from azure.mgmt.web.models import (Site, SiteConfig, User, AppServicePlan, SiteConfigResource,
                                    SkuDescription, SslState, HostNameBinding, NameValuePair,
                                    BackupRequest, DatabaseBackupSetting, BackupSchedule,
                                    RestoreRequest, FrequencyUnit, Certificate, HostNameSslState,
-                                   RampUpRule)
+                                   RampUpRule, UnauthenticatedClientAction, ManagedServiceIdentity)
 
 from azure.cli.core.commands.client_factory import get_mgmt_service_client
-from azure.cli.core.commands.arm import is_valid_resource_id, parse_resource_id
 from azure.cli.core.commands import LongRunningOperation
 
 from azure.cli.core.prompting import prompt_pass, NoTTYException
 import azure.cli.core.azlogging as azlogging
 from azure.cli.core.util import CLIError
 from .vsts_cd_provider import VstsContinuousDeliveryProvider
-from ._params import _generic_site_operation
+from ._params import _generic_site_operation, _generic_settings_operation, AUTH_TYPES
 from ._client_factory import web_client_factory, ex_handler_factory
 
 
@@ -76,6 +77,13 @@ def create_webapp(resource_group_name, name, plan, runtime=None, startup_file=No
         if not match:
             raise CLIError("Runtime '{}' is not supported. Please invoke 'list-runtimes' to cross check".format(runtime))  # pylint: disable=line-too-long
         match['setter'](match, site_config)
+        # Be consistent with portal: any windows webapp should have this even it doesn't have node in the stack
+        if not match['displayName'].startswith('node'):
+            site_config.app_settings.append(NameValuePair("WEBSITE_NODE_DEFAULT_VERSION", "6.9.1"))
+
+    if site_config.app_settings:
+        for setting in site_config.app_settings:
+            logger.info('Will set appsetting %s', setting)
 
     poller = client.web_apps.create_or_update(resource_group_name, name, webapp_def)
     webapp = LongRunningOperation()(poller)
@@ -98,12 +106,18 @@ def show_webapp(resource_group_name, name, slot=None, app_instance=None):
     return webapp
 
 
+def update_webapp(instance, client_affinity_enabled=None):
+    if client_affinity_enabled is not None:
+        instance.client_affinity_enabled = client_affinity_enabled == 'true'
+    return instance
+
+
 def list_webapp(resource_group_name=None):
     return _list_app(['app', 'app,linux'], resource_group_name)
 
 
 def list_function_app(resource_group_name=None):
-    return _list_app(['functionapp'], resource_group_name)
+    return _list_app(['functionapp', 'functionapp,linux'], resource_group_name)
 
 
 def _list_app(app_types, resource_group_name=None):
@@ -116,6 +130,61 @@ def _list_app(app_types, resource_group_name=None):
     for webapp in result:
         _rename_server_farm_props(webapp)
     return result
+
+
+def assign_identity(resource_group_name, name, role='Contributor', scope=None, disable_msi=False):
+    client = web_client_factory()
+
+    def getter():
+        return _generic_site_operation(resource_group_name, name, 'get')
+
+    def setter(webapp):
+        webapp.identity = ManagedServiceIdentity(type='SystemAssigned')
+        poller = client.web_apps.create_or_update(resource_group_name, name, webapp)
+        return LongRunningOperation()(poller)
+
+    from azure.cli.core.commands.arm import assign_implict_identity
+    webapp = assign_implict_identity(getter, setter, role, scope)
+    update_app_settings(resource_group_name, name, ['WEBSITE_DISABLE_MSI={}'.format(disable_msi)])
+    return webapp.identity
+
+
+def get_auth_settings(resource_group_name, name, slot=None):
+    return _generic_site_operation(resource_group_name, name, 'get_auth_settings', slot)
+
+
+def update_auth_settings(resource_group_name, name, enabled=None, action=None,  # pylint: disable=unused-argument
+                         client_id=None, token_store_enabled=None,  # pylint: disable=unused-argument
+                         runtime_version=None, token_refresh_extension_hours=None,  # pylint: disable=unused-argument
+                         allowed_external_redirect_urls=None, client_secret=None,  # pylint: disable=unused-argument
+                         allowed_audiences=None, issuer=None, facebook_app_id=None,  # pylint: disable=unused-argument
+                         facebook_app_secret=None, facebook_oauth_scopes=None,  # pylint: disable=unused-argument
+                         twitter_consumer_key=None, twitter_consumer_secret=None,  # pylint: disable=unused-argument
+                         google_client_id=None, google_client_secret=None,  # pylint: disable=unused-argument
+                         google_oauth_scopes=None, microsoft_account_client_id=None,  # pylint: disable=unused-argument
+                         microsoft_account_client_secret=None,  # pylint: disable=unused-argument
+                         microsoft_account_oauth_scopes=None, slot=None):  # pylint: disable=unused-argument
+    auth_settings = get_auth_settings(resource_group_name, name, slot)
+
+    if action == 'AllowAnonymous':
+        auth_settings.unauthenticated_client_action = UnauthenticatedClientAction.allow_anonymous
+    elif action:
+        auth_settings.unauthenticated_client_action = UnauthenticatedClientAction.redirect_to_login_page
+        auth_settings.default_provider = AUTH_TYPES[action]
+
+    import inspect
+    frame = inspect.currentframe()
+    bool_flags = ['enabled', 'token_store_enabled']
+    # note: getargvalues is used already in azure.cli.core.commands.
+    # and no simple functional replacement for this deprecating method for 3.5
+    args, _, _, values = inspect.getargvalues(frame)  # pylint: disable=deprecated-method
+
+    for arg in args[2:]:
+        print(arg, values[arg])
+        if values.get(arg, None):
+            setattr(auth_settings, arg, values[arg] if arg not in bool_flags else values[arg] == 'true')
+
+    return _generic_site_operation(resource_group_name, name, 'update_auth_settings', slot, auth_settings)
 
 
 def list_runtimes(linux=False):
@@ -231,6 +300,12 @@ def update_site_configs(resource_group_name, name, slot=None,
                         use32_bit_worker_process=None,  # pylint: disable=unused-argument
                         app_command_line=None):  # pylint: disable=unused-argument
     configs = get_site_configs(resource_group_name, name, slot)
+    if linux_fx_version:
+        if linux_fx_version.strip().lower().startswith('docker|'):
+            update_app_settings(resource_group_name, name, ["WEBSITES_ENABLE_APP_SERVICE_STORAGE=false"])
+        else:
+            delete_app_settings(resource_group_name, name, ["WEBSITES_ENABLE_APP_SERVICE_STORAGE"])
+
     import inspect
     frame = inspect.currentframe()
     bool_flags = ['remote_debugging_enabled', 'web_sockets_enabled', 'always_on',
@@ -258,12 +333,14 @@ def update_app_settings(resource_group_name, name, settings=None, slot=None, slo
         # split at the first '=', appsetting should not have '=' in the name
         settings_name, value = name_value.split('=', 1)
         app_settings.properties[settings_name] = value
+    client = web_client_factory()
 
-    result = _generic_site_operation(resource_group_name, name, 'update_application_settings',
-                                     slot, app_settings)
+    result = _generic_settings_operation(resource_group_name, name,
+                                         'update_application_settings',
+                                         app_settings.properties, slot, client)
+
     app_settings_slot_cfg_names = []
     if slot_settings:
-        client = web_client_factory()
         new_slot_setting_names = [n.split('=', 1)[0] for n in slot_settings]
         slot_cfg_names = client.web_apps.list_slot_configuration_names(resource_group_name, name)
         slot_cfg_names.app_setting_names = slot_cfg_names.app_setting_names or []
@@ -288,8 +365,11 @@ def delete_app_settings(resource_group_name, name, setting_names, slot=None):
 
     if is_slot_settings:
         client.web_apps.update_slot_configuration_names(resource_group_name, name, slot_cfg_names)
-    result = _generic_site_operation(resource_group_name, name,
-                                     'update_application_settings', slot, app_settings)
+
+    result = _generic_settings_operation(resource_group_name, name,
+                                         'update_application_settings',
+                                         app_settings.properties, slot, client)
+
     return _build_app_settings_output(result.properties, slot_cfg_names.app_setting_names)
 
 
@@ -318,12 +398,12 @@ def update_connection_strings(resource_group_name, name, connection_string_type,
             value = value[1:-1]
         conn_strings.properties[conn_string_name] = ConnStringValueTypePair(value,
                                                                             connection_string_type)
-
-    result = _generic_site_operation(resource_group_name, name, 'update_connection_strings',
-                                     slot, conn_strings)
+    client = web_client_factory()
+    result = _generic_settings_operation(resource_group_name, name,
+                                         'update_connection_strings',
+                                         conn_strings.properties, slot, client)
 
     if slot_settings:
-        client = web_client_factory()
         new_slot_setting_names = [n.split('=', 1)[0] for n in slot_settings]
         slot_cfg_names = client.web_apps.list_slot_configuration_names(resource_group_name, name)
         slot_cfg_names.connection_string_names = slot_cfg_names.connection_string_names or []
@@ -348,18 +428,21 @@ def delete_connection_strings(resource_group_name, name, setting_names, slot=Non
 
     if is_slot_settings:
         client.web_apps.update_slot_configuration_names(resource_group_name, name, slot_cfg_names)
-    return _generic_site_operation(resource_group_name, name, 'update_connection_strings',
-                                   slot, conn_strings)
+
+    return _generic_settings_operation(resource_group_name, name,
+                                       'update_connection_strings',
+                                       conn_strings.properties, slot, client)
 
 
 CONTAINER_APPSETTING_NAMES = ['DOCKER_REGISTRY_SERVER_URL', 'DOCKER_REGISTRY_SERVER_USERNAME',
-                              'DOCKER_REGISTRY_SERVER_PASSWORD', 'DOCKER_CUSTOM_IMAGE_NAME']
+                              'DOCKER_REGISTRY_SERVER_PASSWORD', "WEBSITES_ENABLE_APP_SERVICE_STORAGE"]
 APPSETTINGS_TO_MASK = ['DOCKER_REGISTRY_SERVER_PASSWORD']
 
 
 def update_container_settings(resource_group_name, name, docker_registry_server_url=None,
                               docker_custom_image_name=None, docker_registry_server_user=None,
-                              docker_registry_server_password=None, slot=None):
+                              websites_enable_app_service_storage=None, docker_registry_server_password=None,
+                              slot=None):
     settings = []
     if docker_registry_server_url is not None:
         settings.append('DOCKER_REGISTRY_SERVER_URL=' + docker_registry_server_url)
@@ -380,8 +463,10 @@ def update_container_settings(resource_group_name, name, docker_registry_server_
         settings.append('DOCKER_REGISTRY_SERVER_PASSWORD=' + docker_registry_server_password)
     if docker_custom_image_name is not None:
         _add_linux_fx_version(resource_group_name, name, docker_custom_image_name, slot)
+    if websites_enable_app_service_storage:
+        settings.append('WEBSITES_ENABLE_APP_SERVICE_STORAGE=' + websites_enable_app_service_storage)
 
-    if docker_registry_server_user or docker_registry_server_password or docker_registry_server_url:
+    if docker_registry_server_user or docker_registry_server_password or docker_registry_server_url or websites_enable_app_service_storage:  # pylint: disable=line-too-long
         update_app_settings(resource_group_name, name, settings, slot)
     settings = get_app_settings(resource_group_name, name, slot)
 
@@ -439,8 +524,7 @@ def _mask_creds_related_appsettings(settings):
 def add_hostname(resource_group_name, webapp_name, hostname, slot=None):
     client = web_client_factory()
     webapp = client.web_apps.get(resource_group_name, webapp_name)
-    binding = HostNameBinding(webapp.location, host_name_binding_name=hostname,
-                              site_name=webapp.name)
+    binding = HostNameBinding(webapp.location, site_name=webapp.name)
     if slot is None:
         return client.web_apps.create_or_update_host_name_binding(resource_group_name, webapp.name, hostname, binding)
 
@@ -521,32 +605,56 @@ def create_webapp_slot(resource_group_name, webapp, slot, configuration_source=N
         for a in slot_cfg_names.connection_string_names or []:
             connection_strings.properties.pop(a, None)
 
-        _generic_site_operation(resource_group_name, webapp, 'update_application_settings',
-                                slot, app_settings)
-        _generic_site_operation(resource_group_name, webapp, 'update_connection_strings',
-                                slot, connection_strings)
+        _generic_settings_operation(resource_group_name, webapp,
+                                    'update_application_settings',
+                                    app_settings.properties, slot, client)
+        _generic_settings_operation(resource_group_name, webapp,
+                                    'update_connection_strings',
+                                    connection_strings.properties, slot, client)
+
     result.name = result.name.split('/')[-1]
     return result
 
 
-def config_source_control(resource_group_name, name, repo_url, repository_type=None, branch=None,  # pylint: disable=too-many-locals
-                          git_token=None, manual_integration=None, slot=None, cd_provider=None,
-                          cd_app_type=None, cd_account=None, cd_account_must_exist=None):
+def config_source_control(resource_group_name, name, repo_url, repository_type='git', branch=None,  # pylint: disable=too-many-locals
+                          manual_integration=None, git_token=None, slot=None, cd_app_type=None,
+                          app_working_dir=None, nodejs_task_runner=None, python_framework=None,
+                          python_version=None, cd_account_create=None, cd_project_url=None, test=None,
+                          slot_swap=None, private_repo_username=None, private_repo_password=None):
     client = web_client_factory()
     location = _get_location_from_webapp(client, resource_group_name, name)
 
-    if cd_provider == 'vsts':
-        create_account = not cd_account_must_exist
+    if cd_project_url:
+        # Add default values
+        cd_app_type = 'AspNet' if cd_app_type is None else cd_app_type
+        python_framework = 'Django' if python_framework is None else python_framework
+        python_version = 'Python 3.5.3 x86' if python_version is None else python_version
+
+        webapp_list = None if test is None else list_webapp(resource_group_name)
         vsts_provider = VstsContinuousDeliveryProvider()
+        cd_app_type_details = {
+            'cd_app_type': cd_app_type,
+            'app_working_dir': app_working_dir,
+            'nodejs_task_runner': nodejs_task_runner,
+            'python_framework': python_framework,
+            'python_version': python_version
+        }
         status = vsts_provider.setup_continuous_delivery(resource_group_name, name, repo_url,
-                                                         branch, git_token, slot, cd_app_type,
-                                                         cd_account, create_account, location)
+                                                         branch, git_token, slot_swap, cd_app_type_details,
+                                                         cd_project_url, cd_account_create, location, test,
+                                                         private_repo_username, private_repo_password, webapp_list)
         logger.warning(status.status_message)
         return status
     else:
+        non_vsts_params = [cd_app_type, app_working_dir, nodejs_task_runner, python_framework,
+                           python_version, cd_account_create, test, slot_swap]
+        if any(non_vsts_params):
+            raise CLIError('Following parameters are of no use when cd_project_url is None: ' +
+                           'cd_app_type, app_working_dir, nodejs_task_runner, python_framework,' +
+                           'python_version, cd_account_create, test, slot_swap')
         from azure.mgmt.web.models import SiteSourceControl, SourceControl
         if git_token:
-            sc = SourceControl(location, name='GitHub', token=git_token)
+            sc = SourceControl(location, source_control_name='GitHub', token=git_token)
             client.update_source_control('GitHub', sc)
 
         source_control = SiteSourceControl(location, repo_url=repo_url, branch=branch,
@@ -578,7 +686,7 @@ def update_git_token(git_token=None):
     '''
     client = web_client_factory()
     from azure.mgmt.web.models import SourceControl
-    sc = SourceControl('not-really-needed', name='GitHub', token=git_token or '')
+    sc = SourceControl('not-really-needed', source_control_name='GitHub', token=git_token or '')
     return client.update_source_control('GitHub', sc)
 
 
@@ -670,7 +778,7 @@ def show_backup_configuration(resource_group_name, webapp_name, slot=None):
     try:
         return _generic_site_operation(resource_group_name, webapp_name,
                                        'get_backup_configuration', slot)
-    except:
+    except Exception:  # pylint: disable=broad-except
         raise CLIError('Backup configuration not found')
 
 
@@ -745,10 +853,8 @@ def update_backup_schedule(resource_group_name, webapp_name, storage_account_url
                                      keep_at_least_one_backup, retention_period_in_days)
     backup_request = BackupRequest(location, backup_schedule=backup_schedule, enabled=True,
                                    storage_account_url=storage_account_url, databases=db_setting)
-    if slot:
-        return client.web_apps.update_backup_configuration_slot(resource_group_name, webapp_name, backup_request, slot)
-
-    return client.web_apps.update_backup_configuration(resource_group_name, webapp_name, backup_request)
+    return _generic_site_operation(resource_group_name, webapp_name, 'update_backup_configuration',
+                                   slot, backup_request)
 
 
 def restore_backup(resource_group_name, webapp_name, storage_account_url, backup_name,
@@ -756,6 +862,8 @@ def restore_backup(resource_group_name, webapp_name, storage_account_url, backup
                    target_name=None, overwrite=None, ignore_hostname_conflict=None, slot=None):
     client = web_client_factory()
     storage_blob_name = backup_name
+    webapp_info = client.web_apps.get(resource_group_name, webapp_name)
+    app_service_plan = webapp_info.server_farm_id.split('/')[-1]
     if not storage_blob_name.lower().endswith('.zip'):
         storage_blob_name += '.zip'
     location = _get_location_from_webapp(client, resource_group_name, webapp_name)
@@ -763,9 +871,10 @@ def restore_backup(resource_group_name, webapp_name, storage_account_url, backup
     restore_request = RestoreRequest(location, storage_account_url=storage_account_url,
                                      blob_name=storage_blob_name, overwrite=overwrite,
                                      site_name=target_name, databases=db_setting,
-                                     ignore_conflicting_host_names=ignore_hostname_conflict)
+                                     ignore_conflicting_host_names=ignore_hostname_conflict,
+                                     app_service_plan=app_service_plan)
     if slot:
-        return client.web_apps.restore(resource_group_name, webapp_name, 0, restore_request, slot)
+        return client.web_apps.restore_slot(resource_group_name, webapp_name, 0, restore_request, slot)
 
     return client.web_apps.restore(resource_group_name, webapp_name, 0, restore_request)
 
@@ -816,8 +925,10 @@ def _get_sku_name(tier):
         return 'BASIC'
     elif tier in ['S1', 'S2', 'S3']:
         return 'STANDARD'
-    elif tier in ['P1', 'P2', 'P3', 'P1V2', 'P2V2', 'P3V2']:
+    elif tier in ['P1', 'P2', 'P3']:
         return 'PREMIUM'
+    elif tier in ['P1V2', 'P2V2', 'P3V2']:
+        return 'PREMIUMV2'
     else:
         raise CLIError("Invalid sku(pricing tier), please refer to command help for valid values")
 
@@ -858,7 +969,7 @@ def set_deployment_user(user_name, password=None):
     Update deployment credentials.(Note, all webapps in your subscription will be impacted)
     '''
     client = web_client_factory()
-    user = User(location='not-really-needed')
+    user = User()
     user.publishing_user_name = user_name
     if password is None:
         try:
@@ -867,8 +978,7 @@ def set_deployment_user(user_name, password=None):
             raise CLIError('Please specify both username and password in non-interactive mode.')
 
     user.publishing_password = password
-    result = client.update_publishing_user(user)
-    return result
+    return client.update_publishing_user(user)
 
 
 def list_publish_profiles(resource_group_name, name, slot=None):
@@ -954,11 +1064,11 @@ def _open_page_in_browser(url):
 # TODO: expose new blob suport
 def config_diagnostics(resource_group_name, name, level=None,
                        application_logging=None, web_server_logging=None,
-                       detailed_error_messages=None, failed_request_tracing=None,
-                       slot=None):
+                       docker_container_logging=None, detailed_error_messages=None,
+                       failed_request_tracing=None, slot=None):
     from azure.mgmt.web.models import (FileSystemApplicationLogsConfig, ApplicationLogsConfig,
-                                       SiteLogsConfig, HttpLogsConfig,
-                                       FileSystemHttpLogsConfig, EnabledConfig)
+                                       SiteLogsConfig, HttpLogsConfig, FileSystemHttpLogsConfig,
+                                       EnabledConfig)
     client = web_client_factory()
     # TODO: ensure we call get_site only once
     site = client.web_apps.get(resource_group_name, name)
@@ -974,11 +1084,16 @@ def config_diagnostics(resource_group_name, name, level=None,
         application_logs = ApplicationLogsConfig(fs_log)
 
     http_logs = None
-    if web_server_logging is not None:
-        enabled = web_server_logging
-        # 100 mb max log size, retenting last 3 days. Yes we hard code it, portal does too
-        fs_server_log = FileSystemHttpLogsConfig(100, 3, enabled)
-        http_logs = HttpLogsConfig(fs_server_log)
+    server_logging_option = web_server_logging or docker_container_logging
+    if server_logging_option:
+        # TODO: az blob storage log config currently not in use, will be impelemented later.
+        # Tracked as Issue: #4764 on Github
+        filesystem_log_config = None
+        turned_on = server_logging_option != 'off'
+        if server_logging_option in ['filesystem', 'off']:
+            # 100 mb max log size, retention lasts 3 days. Yes we hard code it, portal does too
+            filesystem_log_config = FileSystemHttpLogsConfig(100, 3, enabled=turned_on)
+        http_logs = HttpLogsConfig(filesystem_log_config, None)
 
     detailed_error_messages_logs = (None if detailed_error_messages is None
                                     else EnabledConfig(detailed_error_messages))
@@ -1084,7 +1199,7 @@ def get_streaming_log(resource_group_name, name, provider=None, slot=None):
 
     client = web_client_factory()
     user, password = _get_site_credential(client, resource_group_name, name)
-    t = threading.Thread(target=_stream_trace, args=(streaming_url, user, password))
+    t = threading.Thread(target=_get_log, args=(streaming_url, user, password))
     t.daemon = True
     t.start()
 
@@ -1095,12 +1210,9 @@ def get_streaming_log(resource_group_name, name, provider=None, slot=None):
 def download_historical_logs(resource_group_name, name, log_file=None, slot=None):
     scm_url = _get_scm_url(resource_group_name, name, slot)
     url = scm_url.rstrip('/') + '/dump'
-    import requests
-    r = requests.get(url, stream=True)
-    with open(log_file, 'wb') as f:
-        for chunk in r.iter_content(chunk_size=1024):
-            if chunk:  # filter out keep-alive new chunks
-                f.write(chunk)
+    client = web_client_factory()
+    user_name, password = _get_site_credential(client, resource_group_name, name)
+    _get_log(url, user_name, password, log_file)
     logger.warning('Downloaded logs to %s', log_file)
 
 
@@ -1110,7 +1222,7 @@ def _get_site_credential(client, resource_group_name, name):
     return (creds.publishing_user_name, creds.publishing_password)
 
 
-def _stream_trace(streaming_url, user_name, password):
+def _get_log(url, user_name, password, log_file=None):
     import sys
     import certifi
     import urllib3
@@ -1125,16 +1237,27 @@ def _stream_trace(streaming_url, user_name, password):
     headers = urllib3.util.make_headers(basic_auth='{0}:{1}'.format(user_name, password))
     r = http.request(
         'GET',
-        streaming_url,
+        url,
         headers=headers,
         preload_content=False
     )
-    for chunk in r.stream():
-        if chunk:
-            # Extra encode() and decode for stdout which does not surpport 'utf-8'
-            print(chunk.decode(encoding='utf-8', errors='replace')
-                  .encode(std_encoding, errors='replace')
-                  .decode(std_encoding, errors='replace'), end='')  # each line of log has CRLF.
+    if r.status != 200:
+        raise CLIError("Failed to connect to '{}' with status code '{}' and reason '{}'".format(
+            url, r.status, r.reason))
+    if log_file:  # download logs
+        with open(log_file, 'wb') as f:
+            while True:
+                data = r.read(1024)
+                if not data:
+                    break
+                f.write(data)
+    else:  # streaming
+        for chunk in r.stream():
+            if chunk:
+                # Extra encode() and decode for stdout which does not surpport 'utf-8'
+                print(chunk.decode(encoding='utf-8', errors='replace')
+                      .encode(std_encoding, errors='replace')
+                      .decode(std_encoding, errors='replace'), end='')  # each line of log has CRLF.
     r.release_conn()
 
 
@@ -1268,6 +1391,8 @@ class _StackRuntimeHelper(object):
 
     @staticmethod
     def update_site_appsettings(stack, site_config):
+        if site_config.app_settings is None:
+            site_config.app_settings = []
         site_config.app_settings += [NameValuePair(k, v) for k, v in stack['configs'].items()]
         return site_config
 
@@ -1323,7 +1448,8 @@ class _StackRuntimeHelper(object):
 
 def create_function(resource_group_name, name, storage_account, plan=None,
                     consumption_plan_location=None, deployment_source_url=None,
-                    deployment_source_branch='master', deployment_local_git=None):
+                    deployment_source_branch='master', deployment_local_git=None,
+                    deployment_container_image_name=None):
     if deployment_source_url and deployment_local_git:
         raise CLIError('usage error: --deployment-source-url <url> | --deployment-local-git')
     if bool(plan) == bool(consumption_plan_location):
@@ -1332,28 +1458,46 @@ def create_function(resource_group_name, name, storage_account, plan=None,
     site_config = SiteConfig(app_settings=[])
     functionapp_def = Site(location=None, site_config=site_config)
     client = web_client_factory()
+
     if consumption_plan_location:
         locations = list_consumption_locations()
         location = next((l for l in locations if l['name'].lower() == consumption_plan_location.lower()), None)
         if location is None:
             raise CLIError("Location is invalid. Use: az functionapp list-consumption-locations")
         functionapp_def.location = consumption_plan_location
+        functionapp_def.kind = 'functionapp'
     else:
         if is_valid_resource_id(plan):
             plan = parse_resource_id(plan)['name']
         plan_info = client.app_service_plans.get(resource_group_name, plan)
         location = plan_info.location
+        is_linux = plan_info.reserved
+        if is_linux:
+            functionapp_def.kind = 'functionapp,linux'
+            site_config.app_settings.append(NameValuePair('FUNCTIONS_EXTENSION_VERSION', 'beta'))
+            site_config.app_settings.append(NameValuePair('MACHINEKEY_DecryptionKey',
+                                                          str(hexlify(urandom(32)).decode()).upper()))
+            if deployment_container_image_name:
+                site_config.app_settings.append(NameValuePair('DOCKER_CUSTOM_IMAGE_NAME',
+                                                              deployment_container_image_name))
+                site_config.app_settings.append(NameValuePair('FUNCTION_APP_EDIT_MODE', 'readOnly'))
+                site_config.app_settings.append(NameValuePair('WEBSITES_ENABLE_APP_SERVICE_STORAGE', 'false'))
+            else:
+                site_config.app_settings.append(NameValuePair('WEBSITES_ENABLE_APP_SERVICE_STORAGE', 'true'))
+                site_config.linux_fx_version = 'DOCKER|appsvc/azure-functions-runtime'
+        else:
+            functionapp_def.kind = 'functionapp'
+            site_config.app_settings.append(NameValuePair('FUNCTIONS_EXTENSION_VERSION', '~1'))
+
         functionapp_def.server_farm_id = plan
         functionapp_def.location = location
 
     con_string = _validate_and_get_connection_string(resource_group_name, storage_account)
-    functionapp_def.kind = 'functionapp'
 
     # adding appsetting to site to make it a function
     site_config.app_settings.append(NameValuePair('AzureWebJobsStorage', con_string))
     site_config.app_settings.append(NameValuePair('AzureWebJobsDashboard', con_string))
     site_config.app_settings.append(NameValuePair('WEBSITE_NODE_DEFAULT_VERSION', '6.5.0'))
-    site_config.app_settings.append(NameValuePair('FUNCTIONS_EXTENSION_VERSION', '~1'))
 
     if consumption_plan_location is None:
         site_config.always_on = True
@@ -1431,4 +1575,36 @@ def _validate_and_get_connection_string(resource_group_name, storage_account):
 def list_consumption_locations():
     client = web_client_factory()
     regions = client.list_geo_regions(sku='Dynamic')
-    return [{'name': x.name.lower().replace(" ", "")} for x in regions]
+    return [{'name': x.name.lower().replace(' ', '')} for x in regions]
+
+
+def list_locations(sku, linux_workers_enabled=None):
+    client = web_client_factory()
+    full_sku = _get_sku_name(sku)
+    return client.list_geo_regions(full_sku, linux_workers_enabled)
+
+
+def enable_zip_deploy(resource_group_name, name, src, slot=None):
+    client = web_client_factory()
+    user_name, password = _get_site_credential(client, resource_group_name, name)
+    scm_url = _get_scm_url(resource_group_name, name, slot)
+    zip_url = scm_url + '/api/zipdeploy'
+
+    import urllib3
+    authorization = urllib3.util.make_headers(basic_auth='{0}:{1}'.format(user_name, password))
+    headers = authorization
+    headers['content-type'] = 'application/octet-stream'
+
+    import requests
+    import os
+    # Read file content
+    with open(os.path.realpath(os.path.expanduser(src)), 'rb') as fs:
+        zip_content = fs.read()
+        r = requests.post(zip_url, data=zip_content, headers=headers)
+        if r.status_code != 200:
+            raise CLIError("Zip deployment {} failed with status code '{}' and reason '{}'".format(
+                zip_url, r.status_code, r.text))
+
+    # on successful deployment navigate to the app, display the latest deployment json response
+    response = requests.get(scm_url + '/api/deployments/latest', headers=authorization)
+    return response.json()

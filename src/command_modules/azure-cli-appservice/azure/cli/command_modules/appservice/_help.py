@@ -16,6 +16,48 @@ type: group
 short-summary: Manage web apps.
 """
 
+helps['webapp auth'] = """
+    type: group
+    short-summary: Manage webapp authentication and authorization
+"""
+
+helps['webapp auth show'] = """
+    type: command
+    short-summary: Show the authentification settings for the webapp.
+"""
+
+helps['webapp auth update'] = """
+    type: command
+    short-summary: Update the authentication settings for the webapp.
+    examples:
+    - name: Enable AAD by enabling authentication and setting AAD-associated parameters. Default provider is set to AAD. Must have created a AAD service principal beforehand.
+      text: >
+        az webapp auth update  -g myResourceGroup -n myUniqueApp --enabled true \\
+          --action LoginWithAzureActiveDirectory \\
+          --aad-allowed-token-audiences https://webapp_name.azurewebsites.net/.auth/login/aad/callback \\
+          --aad-client-id ecbacb08-df8b-450d-82b3-3fced03f2b27 --aad-client-secret very_secret_password \\
+          --aad-token-issuer-url https://sts.windows.net/54826b22-38d6-4fb2-bad9-b7983a3e9c5a/
+    - name: Allow Facebook authentication by setting FB-associated parameters and turning on public-profile and email scopes; allow anonymous users
+      text: >
+        az webapp auth update -g myResourceGroup -n myUniqueApp --action AllowAnonymous \\
+          --facebook-app-id my_fb_id --facebook-app-secret my_fb_secret \\
+          --facebook-oauth-scopes public_profile email
+"""
+
+helps['webapp assign-identity'] = """
+    type: command
+    short-summary: (PREVIEW) assign managed service identity to the webapp
+    examples:
+        - name: assign local identity and assign a reader role to the current resource group.
+          text: >
+            az webapp assign-identity -g MyResourceGroup -n MyUniqueApp --role reader --scope /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/MyResourceGroup
+        - name: disable the identity when there is need.
+          text: >
+            az webapp config appsettings set -g MyResourceGroup -n MyUniqueApp --settings WEBSITE_DISABLE_MSI=true
+"""
+
+helps['functionapp assign-identity'] = helps['webapp assign-identity'].replace('webapp', 'functionapp')
+
 helps['webapp config'] = """
 type: group
 short-summary: Configure a web app.
@@ -271,6 +313,23 @@ helps['webapp deployment source config-local-git'] = """
                 https://<deploy_user_name>@MyUniqueApp.scm.azurewebsites.net/MyUniqueApp.git
 """
 
+helps['webapp deployment source config-zip'] = """
+    type: command
+    short-summary: Perform deployment using the kudu zip push deployment for a webapp.
+    long-summary: >
+        By default Kudu assumes that zip deployments do not require any build-related actions like
+        npm install or dotnet publish. This can be overridden by including an .ini file on your
+        zip file with the setting SCM_DO_BUILD_DURING_DEPLOYMENT = true to enable Kudu detection
+        logic and build script generation process. Alternatley the setting can be enabled using the
+        az webapp config appsettings set command.
+    examples:
+         - name: Perform deployment by using zip file content.
+           text: >
+             az webapp deployment source config-zip \\
+                 -g <myRG> -n <myAppName> \\
+                 --src <zip file path location>
+"""
+
 helps['webapp deployment source delete'] = """
     type: command
     short-summary: Delete a source control deployment configuration.
@@ -419,6 +478,15 @@ helps['webapp create'] = """
         - name: Create a web app with a NodeJS 6.2 runtime and deployed from a local git repository.
           text: >
             az webapp create -g MyResourceGroup -p MyPlan -n MyUniqueAppName --runtime "node|6.2" --deployment-local-git
+"""
+
+helps['webapp update'] = """
+    type: command
+    short-summary: Update a web app.
+    examples:
+        - name: Update the tags of a web app.
+          text: >
+            az webapp update -g MyResourceGroup -n MyAppName --set tags.tagName=tagValue
 """
 
 helps['webapp list-runtimes'] = """
@@ -636,6 +704,7 @@ helps['functionapp deployment source sync'] = """
     type: command
     short-summary: Synchronize from the repository. Only needed under manual integration mode.
 """
+
 helps['functionapp deployment user'] = """
     type: group
     short-summary: Manage user credentials for deployment.
@@ -651,4 +720,21 @@ helps['functionapp deployment user set'] = """
           text: >
             az functionapp deployment user set
             --user-name MyUserName
+"""
+
+helps['functionapp deployment source config-zip'] = """
+    type: command
+    short-summary: Perform deployment using the kudu zip push deployment for a function app.
+    long-summary: >
+        By default Kudu assumes that zip deployments do not require any build-related actions like
+        npm install or dotnet publish. This can be overridden by including an .ini file on your
+        zip file with the setting SCM_DO_BUILD_DURING_DEPLOYMENT = true to enable Kudu detection
+        logic and build script generation process. Alternatley the setting can be enabled using the
+        az functionapp config appsettings set command.
+    examples:
+         - name: Perform deployment by using zip file content.
+           text: >
+             az functionapp deployment source config-zip \\
+                 -g <myRG> -n <myAppName> \\
+                 --src <zip file path location>
 """

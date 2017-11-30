@@ -2,6 +2,20 @@
 
 Release History
 ===============
+
+0.1.14
+++++++
+* Adds support for certificate authorities (CA) and certificate chains.
+* Minor fixes.
+
+0.1.13
+++++++
+* minor fixes
+
+0.1.12 (2017-09-22)
++++++++++++++++++++
+* minor fixes
+
 0.1.11 (2017-08-28)
 +++++++++++++++++++
 * revisit of bug 3934 -- policy creation no longer clears existing policies.

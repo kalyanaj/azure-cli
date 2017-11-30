@@ -160,7 +160,7 @@ def find_return_type(model):
     :returns: str
     """
     # Search for :rtype: in the docstring
-    pattern = r":rtype: (.*?)\n(\s*:rtype:|\s*:raises:|\"\"\")"
+    pattern = r':rtype: (.*?)( or)?\n.*(:raises:)?'
     return_type = re.search(pattern, model.__doc__, re.DOTALL)
     if return_type:
         return re.sub(r"\n\s*", "", return_type.group(1))
@@ -884,7 +884,7 @@ def validate_client_parameters(namespace):
             acc = next((x for x in client.batch_account.list()
                         if x.name == namespace.account_name and x.account_endpoint == host), None)
             if acc:
-                from azure.cli.core.commands.arm import parse_resource_id
+                from msrestazure.tools import parse_resource_id
                 rg = parse_resource_id(acc.id)['resource_group']
                 namespace.account_key = \
                     client.batch_account.get_keys(rg,  # pylint: disable=no-member

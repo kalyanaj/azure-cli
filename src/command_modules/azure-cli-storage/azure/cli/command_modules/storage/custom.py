@@ -12,36 +12,24 @@ from azure.cli.core.util import CLIError
 from azure.cli.core.profiles import get_sdk, supported_api_version, ResourceType
 
 from azure.cli.command_modules.storage._factory import storage_client_factory
-from azure.cli.command_modules.storage.util import guess_content_type
-from azure.cli.core.application import APPLICATION
+from .sdkutil import get_table_data_type
 
-Logging, Metrics, CorsRule, AccessPolicy, RetentionPolicy = get_sdk(ResourceType.DATA_STORAGE,
-                                                                    'Logging',
-                                                                    'Metrics',
-                                                                    'CorsRule',
-                                                                    'AccessPolicy',
-                                                                    'RetentionPolicy',
-                                                                    mod='models')
+Logging, Metrics, CorsRule, AccessPolicy, RetentionPolicy = \
+    get_sdk(ResourceType.DATA_STORAGE, 'Logging', 'Metrics', 'CorsRule', 'AccessPolicy', 'RetentionPolicy',
+            mod='common.models')
 
-BlockBlobService, BaseBlobService, FileService, FileProperties, DirectoryProperties, TableService, QueueService = \
+BlockBlobService, BaseBlobService, FileService, FileProperties, DirectoryProperties, QueueService = \
     get_sdk(ResourceType.DATA_STORAGE, 'blob#BlockBlobService', 'blob.baseblobservice#BaseBlobService',
-            'file#FileService', 'file.models#FileProperties', 'file.models#DirectoryProperties', 'table#TableService',
+            'file#FileService', 'file.models#FileProperties', 'file.models#DirectoryProperties',
             'queue#QueueService')
 
-
-def _update_progress(current, total):
-    HOOK = APPLICATION.get_progress_controller(True)
-
-    if total:
-        HOOK.add(message='Alive', value=current, total_val=total)
-        if total == current:
-            HOOK.end()
+TableService = get_table_data_type('table', 'TableService')
 
 
 # CUSTOM METHODS
 
-def create_storage_account(resource_group_name, account_name, sku, location=None, kind=None, tags=None,
-                           custom_domain=None, encryption_services=None, access_tier=None, https_only=None,
+def create_storage_account(resource_group_name, account_name, sku=None, location=None, kind=None,
+                           tags=None, custom_domain=None, encryption_services=None, access_tier=None, https_only=None,
                            bypass=None, default_action=None, assign_identity=False):
     StorageAccountCreateParameters, Kind, Sku, CustomDomain, AccessTier, Identity, Encryption, NetworkRuleSet = get_sdk(
         ResourceType.MGMT_STORAGE,
@@ -52,7 +40,7 @@ def create_storage_account(resource_group_name, account_name, sku, location=None
         'AccessTier',
         'Identity',
         'Encryption',
-        'StorageNetworkAcls',
+        'NetworkRuleSet',
         mod='models')
     scf = storage_client_factory()
     params = StorageAccountCreateParameters(sku=Sku(sku), kind=Kind(kind), location=location, tags=tags)
@@ -70,8 +58,8 @@ def create_storage_account(resource_group_name, account_name, sku, location=None
     if NetworkRuleSet and (bypass or default_action):
         if bypass and not default_action:
             raise CLIError('incorrect usage: --default-action ACTION [--bypass SERVICE ...]')
-        params.network_acls = NetworkRuleSet(bypass=bypass, default_action=default_action, ip_rules=None,
-                                             virtual_network_rules=None)
+        params.network_rule_set = NetworkRuleSet(bypass=bypass, default_action=default_action, ip_rules=None,
+                                                 virtual_network_rules=None)
 
     return scf.storage_accounts.create(resource_group_name, account_name, params)
 
@@ -98,7 +86,7 @@ def update_storage_account(instance, sku=None, tags=None, custom_domain=None, us
         'AccessTier',
         'Identity',
         'Encryption',
-        'StorageNetworkAcls',
+        'NetworkRuleSet',
         mod='models')
     domain = instance.custom_domain
     if custom_domain is not None:
@@ -131,8 +119,8 @@ def update_storage_account(instance, sku=None, tags=None, custom_domain=None, us
     if assign_identity:
         params.identity = Identity()
 
-    if NetworkRuleSet and (bypass or default_action):
-        acl = instance.network_acls
+    if NetworkRuleSet:
+        acl = instance.network_rule_set
         if not acl:
             if bypass and not default_action:
                 raise CLIError('incorrect usage: --default-action ACTION [--bypass SERVICE ...]')
@@ -143,16 +131,17 @@ def update_storage_account(instance, sku=None, tags=None, custom_domain=None, us
                 acl.bypass = bypass
             if default_action:
                 acl.default_action = default_action
-        params.network_acls = acl
+        params.network_rule_set = acl
 
     return params
 
 
 @transfer_doc(FileService.list_directories_and_files)
-def list_share_files(client, share_name, directory_name=None, timeout=None,
-                     exclude_dir=False):
-    generator = client.list_directories_and_files(share_name, directory_name,
-                                                  timeout=timeout)
+def list_share_files(client, share_name, directory_name=None, timeout=None, exclude_dir=False, snapshot=None):
+    if supported_api_version(ResourceType.DATA_STORAGE, min_api='2017-04-17'):
+        generator = client.list_directories_and_files(share_name, directory_name, timeout=timeout, snapshot=snapshot)
+    else:
+        generator = client.list_directories_and_files(share_name, directory_name, timeout=timeout)
     if exclude_dir:
         return list(f for f in generator if isinstance(f.properties, FileProperties))
 
@@ -210,83 +199,6 @@ def show_storage_account_connection_string(
     connection_string = '{}{}'.format(connection_string,
                                       ';TableEndpoint={}'.format(table_endpoint) if table_endpoint else '')
     return {'connectionString': connection_string}
-
-
-@transfer_doc(BlockBlobService.create_blob_from_path)
-def upload_blob(client, container_name, blob_name, file_path, blob_type=None, content_settings=None, metadata=None,
-                validate_content=False, maxsize_condition=None, max_connections=2, lease_id=None, tier=None,
-                if_modified_since=None, if_unmodified_since=None, if_match=None, if_none_match=None, timeout=None):
-    """Upload a blob to a container."""
-
-    settings_class = get_sdk(ResourceType.DATA_STORAGE, 'blob.models#ContentSettings')
-    content_settings = guess_content_type(file_path, content_settings, settings_class)
-
-    def upload_append_blob():
-        if not client.exists(container_name, blob_name):
-            client.create_blob(
-                container_name=container_name,
-                blob_name=blob_name,
-                content_settings=content_settings,
-                metadata=metadata,
-                lease_id=lease_id,
-                if_modified_since=if_modified_since,
-                if_match=if_match,
-                if_none_match=if_none_match,
-                timeout=timeout)
-
-        append_blob_args = {
-            'container_name': container_name,
-            'blob_name': blob_name,
-            'file_path': file_path,
-            'progress_callback': _update_progress,
-            'maxsize_condition': maxsize_condition,
-            'lease_id': lease_id,
-            'timeout': timeout
-        }
-
-        if supported_api_version(ResourceType.DATA_STORAGE, min_api='2016-05-31'):
-            append_blob_args['validate_content'] = validate_content
-
-        return client.append_blob_from_path(**append_blob_args)
-
-    def upload_block_blob():
-        import os
-
-        # increase the block size to 100MB when the file is larger than 200GB
-        if os.path.isfile(file_path) and os.stat(file_path).st_size > 200 * 1024 * 1024 * 1024:
-            client.MAX_BLOCK_SIZE = 100 * 1024 * 1024
-            client.MAX_SINGLE_PUT_SIZE = 256 * 1024 * 1024
-
-        create_blob_args = {
-            'container_name': container_name,
-            'blob_name': blob_name,
-            'file_path': file_path,
-            'progress_callback': _update_progress,
-            'content_settings': content_settings,
-            'metadata': metadata,
-            'max_connections': max_connections,
-            'lease_id': lease_id,
-            'if_modified_since': if_modified_since,
-            'if_unmodified_since': if_unmodified_since,
-            'if_match': if_match,
-            'if_none_match': if_none_match,
-            'timeout': timeout
-        }
-
-        if supported_api_version(ResourceType.DATA_STORAGE, min_api='2017-04-17') and tier:
-            create_blob_args['premium_page_blob_tier'] = tier
-
-        if supported_api_version(ResourceType.DATA_STORAGE, min_api='2016-05-31'):
-            create_blob_args['validate_content'] = validate_content
-
-        return client.create_blob_from_path(**create_blob_args)
-
-    type_func = {
-        'append': upload_append_blob,
-        'block': upload_block_blob,
-        'page': upload_block_blob  # same implementation
-    }
-    return type_func[blob_type]()
 
 
 def set_blob_tier(client, container_name, blob_name, tier, blob_type='block', timeout=None):
@@ -440,7 +352,7 @@ def get_metrics(services='bfqt', interval='both', timeout=None):
 
 def list_network_rules(client, resource_group_name, storage_account_name):
     sa = client.get_properties(resource_group_name, storage_account_name)
-    rules = sa.network_acls
+    rules = sa.network_rule_set
     delattr(rules, 'bypass')
     delattr(rules, 'default_action')
     return rules
@@ -449,9 +361,9 @@ def list_network_rules(client, resource_group_name, storage_account_name):
 def add_network_rule(client, resource_group_name, storage_account_name, action='Allow', subnet=None, vnet_name=None,  # pylint: disable=unused-argument
                      ip_address=None):
     sa = client.get_properties(resource_group_name, storage_account_name)
-    rules = sa.network_acls
+    rules = sa.network_rule_set
     if subnet:
-        from azure.cli.core.commands.arm import is_valid_resource_id
+        from msrestazure.tools import is_valid_resource_id
         if not is_valid_resource_id(subnet):
             raise CLIError("Expected fully qualified resource ID: got '{}'".format(subnet))
         VirtualNetworkRule = get_sdk(ResourceType.MGMT_STORAGE, 'VirtualNetworkRule', mod='models')
@@ -465,14 +377,14 @@ def add_network_rule(client, resource_group_name, storage_account_name, action='
         rules.ip_rules.append(IpRule(ip_address, action=action))
 
     StorageAccountUpdateParameters = get_sdk(ResourceType.MGMT_STORAGE, 'StorageAccountUpdateParameters', mod='models')
-    params = StorageAccountUpdateParameters(network_acls=rules)
+    params = StorageAccountUpdateParameters(network_rule_set=rules)
     return client.update(resource_group_name, storage_account_name, params)
 
 
 def remove_network_rule(client, resource_group_name, storage_account_name, ip_address=None, subnet=None,
                         vnet_name=None):  # pylint: disable=unused-argument
     sa = client.get_properties(resource_group_name, storage_account_name)
-    rules = sa.network_acls
+    rules = sa.network_rule_set
     if subnet:
         rules.virtual_network_rules = [x for x in rules.virtual_network_rules
                                        if not x.virtual_network_resource_id.endswith(subnet)]
@@ -480,5 +392,5 @@ def remove_network_rule(client, resource_group_name, storage_account_name, ip_ad
         rules.ip_rules = [x for x in rules.ip_rules if x.ip_address_or_range != ip_address]
 
     StorageAccountUpdateParameters = get_sdk(ResourceType.MGMT_STORAGE, 'StorageAccountUpdateParameters', mod='models')
-    params = StorageAccountUpdateParameters(network_acls=rules)
+    params = StorageAccountUpdateParameters(network_rule_set=rules)
     return client.update(resource_group_name, storage_account_name, params)

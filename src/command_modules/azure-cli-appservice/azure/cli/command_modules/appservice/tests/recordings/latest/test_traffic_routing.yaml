@@ -8,9 +8,9 @@ interactions:
       Connection: [keep-alive]
       Content-Length: ['50']
       Content-Type: [application/json; charset=utf-8]
-      User-Agent: [python/3.5.2 (Windows-10-10.0.15063-SP0) requests/2.9.1 msrest/0.4.11
-          msrest_azure/0.4.11 resourcemanagementclient/1.1.0 Azure-SDK-For-Python
-          AZURECLI/2.0.12+dev]
+      User-Agent: [python/3.5.3 (Windows-10-10.0.15063-SP0) requests/2.18.4 msrest/0.4.15
+          msrest_azure/0.4.11 resourcemanagementclient/1.2.1 Azure-SDK-For-Python
+          AZURECLI/2.0.21]
       accept-language: [en-US]
     method: PUT
     uri: https://management.azure.com/subscriptions/00000000-0000-0000-0000-000000000000/resourcegroups/clitest.rg000001?api-version=2017-05-10
@@ -20,11 +20,11 @@ interactions:
       cache-control: [no-cache]
       content-length: ['328']
       content-type: [application/json; charset=utf-8]
-      date: ['Wed, 02 Aug 2017 17:26:57 GMT']
+      date: ['Tue, 24 Oct 2017 23:52:26 GMT']
       expires: ['-1']
       pragma: [no-cache]
       strict-transport-security: [max-age=31536000; includeSubDomains]
-      x-ms-ratelimit-remaining-subscription-writes: ['1199']
+      x-ms-ratelimit-remaining-subscription-writes: ['1195']
     status: {code: 201, message: Created}
 - request:
     body: null
@@ -34,9 +34,9 @@ interactions:
       CommandName: [appservice plan create]
       Connection: [keep-alive]
       Content-Type: [application/json; charset=utf-8]
-      User-Agent: [python/3.5.2 (Windows-10-10.0.15063-SP0) requests/2.9.1 msrest/0.4.11
-          msrest_azure/0.4.11 resourcemanagementclient/1.1.0 Azure-SDK-For-Python
-          AZURECLI/2.0.12+dev]
+      User-Agent: [python/3.5.3 (Windows-10-10.0.15063-SP0) requests/2.18.4 msrest/0.4.15
+          msrest_azure/0.4.11 resourcemanagementclient/1.2.1 Azure-SDK-For-Python
+          AZURECLI/2.0.21]
       accept-language: [en-US]
     method: GET
     uri: https://management.azure.com/subscriptions/00000000-0000-0000-0000-000000000000/resourcegroups/clitest.rg000001?api-version=2017-05-10
@@ -46,15 +46,15 @@ interactions:
       cache-control: [no-cache]
       content-length: ['328']
       content-type: [application/json; charset=utf-8]
-      date: ['Wed, 02 Aug 2017 17:26:59 GMT']
+      date: ['Tue, 24 Oct 2017 23:52:26 GMT']
       expires: ['-1']
       pragma: [no-cache]
       strict-transport-security: [max-age=31536000; includeSubDomains]
       vary: [Accept-Encoding]
     status: {code: 200, message: OK}
 - request:
-    body: '{"properties": {"perSiteScaling": false, "name": "clitesttrafficplan"},
-      "sku": {"tier": "STANDARD", "name": "S1", "capacity": 1}, "location": "westus"}'
+    body: '{"sku": {"tier": "STANDARD", "name": "S1", "capacity": 1}, "properties":
+      {"perSiteScaling": false, "name": "clitesttrafficplan"}, "location": "westus"}'
     headers:
       Accept: [application/json]
       Accept-Encoding: ['gzip, deflate']
@@ -62,21 +62,21 @@ interactions:
       Connection: [keep-alive]
       Content-Length: ['151']
       Content-Type: [application/json; charset=utf-8]
-      User-Agent: [python/3.5.2 (Windows-10-10.0.15063-SP0) requests/2.9.1 msrest/0.4.11
-          msrest_azure/0.4.11 websitemanagementclient/0.32.0 Azure-SDK-For-Python
-          AZURECLI/2.0.12+dev]
+      User-Agent: [python/3.5.3 (Windows-10-10.0.15063-SP0) requests/2.18.4 msrest/0.4.15
+          msrest_azure/0.4.11 websitemanagementclient/0.33.0 Azure-SDK-For-Python
+          AZURECLI/2.0.21]
       accept-language: [en-US]
     method: PUT
     uri: https://management.azure.com/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/clitest.rg000001/providers/Microsoft.Web/serverfarms/clitesttrafficplan?api-version=2016-09-01
   response:
     body: {string: '{"id":"/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/clitest.rg000001/providers/Microsoft.Web/serverfarms/clitesttrafficplan","name":"clitesttrafficplan","type":"Microsoft.Web/serverfarms","kind":"app","location":"West
-        US","properties":{"serverFarmId":0,"name":"clitesttrafficplan","workerSize":"Default","workerSizeId":0,"workerTierName":null,"numberOfWorkers":1,"currentWorkerSize":"Default","currentWorkerSizeId":0,"currentNumberOfWorkers":1,"status":"Ready","webSpace":"clitest.rg000001-WestUSwebspace","subscription":"8d57ddbd-c779-40ea-b660-1015f4bf027d","adminSiteName":null,"hostingEnvironment":null,"hostingEnvironmentProfile":null,"maximumNumberOfWorkers":10,"planName":"VirtualDedicatedPlan","adminRuntimeSiteName":null,"computeMode":"Shared","siteMode":null,"geoRegion":"West
-        US","perSiteScaling":false,"numberOfSites":0,"hostingEnvironmentId":null,"tags":null,"kind":"app","resourceGroup":"clitest.rg000001","reserved":false,"mdmId":"waws-prod-bay-043_35476","targetWorkerCount":0,"targetWorkerSizeId":0,"provisioningState":"Succeeded"},"sku":{"name":"S1","tier":"Standard","size":"S1","family":"S","capacity":1}}'}
+        US","properties":{"serverFarmId":0,"name":"clitesttrafficplan","workerSize":"Default","workerSizeId":0,"workerTierName":null,"numberOfWorkers":1,"currentWorkerSize":"Default","currentWorkerSizeId":0,"currentNumberOfWorkers":1,"status":"Ready","webSpace":"clitest.rg000001-WestUSwebspace","subscription":"0b1f6471-1bf0-4dda-aec3-cb9272f09590","adminSiteName":null,"hostingEnvironment":null,"hostingEnvironmentProfile":null,"maximumNumberOfWorkers":10,"planName":"VirtualDedicatedPlan","adminRuntimeSiteName":null,"computeMode":"Shared","siteMode":null,"geoRegion":"West
+        US","perSiteScaling":false,"numberOfSites":0,"hostingEnvironmentId":null,"isSpot":false,"spotExpirationTime":null,"tags":null,"kind":"app","resourceGroup":"clitest.rg000001","reserved":false,"mdmId":"waws-prod-bay-015_132786","targetWorkerCount":0,"targetWorkerSizeId":0,"provisioningState":"Succeeded"},"sku":{"name":"S1","tier":"Standard","size":"S1","family":"S","capacity":1}}'}
     headers:
       cache-control: [no-cache]
-      content-length: ['1324']
+      content-length: ['1366']
       content-type: [application/json]
-      date: ['Wed, 02 Aug 2017 17:27:05 GMT']
+      date: ['Tue, 24 Oct 2017 23:52:36 GMT']
       expires: ['-1']
       pragma: [no-cache]
       server: [Microsoft-IIS/8.0]
@@ -84,7 +84,7 @@ interactions:
       transfer-encoding: [chunked]
       vary: [Accept-Encoding]
       x-aspnet-version: [4.0.30319]
-      x-ms-ratelimit-remaining-subscription-writes: ['1199']
+      x-ms-ratelimit-remaining-subscription-writes: ['1194']
       x-powered-by: [ASP.NET]
     status: {code: 200, message: OK}
 - request:
@@ -95,21 +95,21 @@ interactions:
       CommandName: [webapp create]
       Connection: [keep-alive]
       Content-Type: [application/json; charset=utf-8]
-      User-Agent: [python/3.5.2 (Windows-10-10.0.15063-SP0) requests/2.9.1 msrest/0.4.11
-          msrest_azure/0.4.11 websitemanagementclient/0.32.0 Azure-SDK-For-Python
-          AZURECLI/2.0.12+dev]
+      User-Agent: [python/3.5.3 (Windows-10-10.0.15063-SP0) requests/2.18.4 msrest/0.4.15
+          msrest_azure/0.4.11 websitemanagementclient/0.33.0 Azure-SDK-For-Python
+          AZURECLI/2.0.21]
       accept-language: [en-US]
     method: GET
     uri: https://management.azure.com/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/clitest.rg000001/providers/Microsoft.Web/serverfarms/clitesttrafficplan?api-version=2016-09-01
   response:
     body: {string: '{"id":"/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/clitest.rg000001/providers/Microsoft.Web/serverfarms/clitesttrafficplan","name":"clitesttrafficplan","type":"Microsoft.Web/serverfarms","kind":"app","location":"West
-        US","properties":{"serverFarmId":0,"name":"clitesttrafficplan","workerSize":"Default","workerSizeId":0,"workerTierName":null,"numberOfWorkers":1,"currentWorkerSize":"Default","currentWorkerSizeId":0,"currentNumberOfWorkers":1,"status":"Ready","webSpace":"clitest.rg000001-WestUSwebspace","subscription":"8d57ddbd-c779-40ea-b660-1015f4bf027d","adminSiteName":null,"hostingEnvironment":null,"hostingEnvironmentProfile":null,"maximumNumberOfWorkers":10,"planName":"VirtualDedicatedPlan","adminRuntimeSiteName":null,"computeMode":"Shared","siteMode":null,"geoRegion":"West
-        US","perSiteScaling":false,"numberOfSites":0,"hostingEnvironmentId":null,"tags":null,"kind":"app","resourceGroup":"clitest.rg000001","reserved":false,"mdmId":"waws-prod-bay-043_35476","targetWorkerCount":0,"targetWorkerSizeId":0,"provisioningState":"Succeeded"},"sku":{"name":"S1","tier":"Standard","size":"S1","family":"S","capacity":1}}'}
+        US","properties":{"serverFarmId":0,"name":"clitesttrafficplan","workerSize":"Default","workerSizeId":0,"workerTierName":null,"numberOfWorkers":1,"currentWorkerSize":"Default","currentWorkerSizeId":0,"currentNumberOfWorkers":1,"status":"Ready","webSpace":"clitest.rg000001-WestUSwebspace","subscription":"0b1f6471-1bf0-4dda-aec3-cb9272f09590","adminSiteName":null,"hostingEnvironment":null,"hostingEnvironmentProfile":null,"maximumNumberOfWorkers":10,"planName":"VirtualDedicatedPlan","adminRuntimeSiteName":null,"computeMode":"Shared","siteMode":null,"geoRegion":"West
+        US","perSiteScaling":false,"numberOfSites":0,"hostingEnvironmentId":null,"isSpot":false,"spotExpirationTime":null,"tags":null,"kind":"app","resourceGroup":"clitest.rg000001","reserved":false,"mdmId":"waws-prod-bay-015_132786","targetWorkerCount":0,"targetWorkerSizeId":0,"provisioningState":"Succeeded"},"sku":{"name":"S1","tier":"Standard","size":"S1","family":"S","capacity":1}}'}
     headers:
       cache-control: [no-cache]
-      content-length: ['1324']
+      content-length: ['1366']
       content-type: [application/json]
-      date: ['Wed, 02 Aug 2017 17:27:06 GMT']
+      date: ['Tue, 24 Oct 2017 23:52:37 GMT']
       expires: ['-1']
       pragma: [no-cache]
       server: [Microsoft-IIS/8.0]
@@ -120,32 +120,32 @@ interactions:
       x-powered-by: [ASP.NET]
     status: {code: 200, message: OK}
 - request:
-    body: '{"properties": {"serverFarmId": "clitesttrafficplan", "microService": "WebSites",
-      "scmSiteAlsoStopped": false, "siteConfig": {"appSettings": [], "localMySqlEnabled":
-      false, "netFrameworkVersion": "v4.6"}, "reserved": false}, "location": "West
-      US"}'
+    body: 'b''{"properties": {"siteConfig": {"localMySqlEnabled": false, "netFrameworkVersion":
+      "v4.6", "appSettings": []}, "scmSiteAlsoStopped": false, "reserved": false,
+      "serverFarmId": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/clitest.rg000001/providers/Microsoft.Web/serverfarms/clitesttrafficplan"},
+      "location": "West US"}'''
     headers:
       Accept: [application/json]
       Accept-Encoding: ['gzip, deflate']
       CommandName: [webapp create]
       Connection: [keep-alive]
-      Content-Length: ['247']
+      Content-Length: ['398']
       Content-Type: [application/json; charset=utf-8]
-      User-Agent: [python/3.5.2 (Windows-10-10.0.15063-SP0) requests/2.9.1 msrest/0.4.11
-          msrest_azure/0.4.11 websitemanagementclient/0.32.0 Azure-SDK-For-Python
-          AZURECLI/2.0.12+dev]
+      User-Agent: [python/3.5.3 (Windows-10-10.0.15063-SP0) requests/2.18.4 msrest/0.4.15
+          msrest_azure/0.4.11 websitemanagementclient/0.33.0 Azure-SDK-For-Python
+          AZURECLI/2.0.21]
       accept-language: [en-US]
     method: PUT
     uri: https://management.azure.com/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/clitest.rg000001/providers/Microsoft.Web/sites/clitestwebtraffic?api-version=2016-08-01
   response:
     body: {string: '{"id":"/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/clitest.rg000001/providers/Microsoft.Web/sites/clitestwebtraffic","name":"clitestwebtraffic","type":"Microsoft.Web/sites","kind":"app","location":"West
-        US","properties":{"name":"clitestwebtraffic","state":"Running","hostNames":["clitestwebtraffic.azurewebsites.net"],"webSpace":"clitest.rg000001-WestUSwebspace","selfLink":"https://waws-prod-bay-043.api.azurewebsites.windows.net/subscriptions/00000000-0000-0000-0000-000000000000/webspaces/clitest.rg000001-WestUSwebspace/sites/clitestwebtraffic","repositorySiteName":"clitestwebtraffic","owner":null,"usageState":"Normal","enabled":true,"adminEnabled":true,"enabledHostNames":["clitestwebtraffic.azurewebsites.net","clitestwebtraffic.scm.azurewebsites.net"],"siteProperties":{"metadata":null,"properties":[],"appSettings":null},"availabilityState":"Normal","sslCertificates":null,"csrs":[],"cers":null,"siteMode":null,"hostNameSslStates":[{"name":"clitestwebtraffic.azurewebsites.net","sslState":"Disabled","ipBasedSslResult":null,"virtualIP":null,"thumbprint":null,"toUpdate":null,"toUpdateIpBasedSsl":null,"ipBasedSslState":"NotConfigured","hostType":"Standard"},{"name":"clitestwebtraffic.scm.azurewebsites.net","sslState":"Disabled","ipBasedSslResult":null,"virtualIP":null,"thumbprint":null,"toUpdate":null,"toUpdateIpBasedSsl":null,"ipBasedSslState":"NotConfigured","hostType":"Repository"}],"computeMode":null,"serverFarm":null,"serverFarmId":"/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/clitest.rg000001/providers/Microsoft.Web/serverfarms/clitesttrafficplan","reserved":false,"lastModifiedTimeUtc":"2017-08-02T17:27:09.83","storageRecoveryDefaultState":"Running","contentAvailabilityState":"Normal","runtimeAvailabilityState":"Normal","siteConfig":null,"deploymentId":"clitestwebtraffic","trafficManagerHostNames":null,"sku":"Standard","premiumAppDeployed":null,"scmSiteAlsoStopped":false,"targetSwapSlot":null,"hostingEnvironment":null,"hostingEnvironmentProfile":null,"clientAffinityEnabled":true,"clientCertEnabled":false,"hostNamesDisabled":false,"domainVerificationIdentifiers":null,"kind":"app","outboundIpAddresses":"104.40.88.152,104.40.87.132,104.40.95.34,104.40.88.78","possibleOutboundIpAddresses":null,"containerSize":0,"dailyMemoryTimeQuota":0,"suspendedTill":null,"siteDisabledReason":0,"functionExecutionUnitsCache":null,"maxNumberOfWorkers":null,"homeStamp":"waws-prod-bay-043","cloningInfo":null,"hostingEnvironmentId":null,"tags":null,"resourceGroup":"clitest.rg000001","defaultHostName":"clitestwebtraffic.azurewebsites.net","slotSwapStatus":null}}'}
+        US","properties":{"name":"clitestwebtraffic","state":"Running","hostNames":["clitestwebtraffic.azurewebsites.net"],"webSpace":"clitest.rg000001-WestUSwebspace","selfLink":"https://waws-prod-bay-015.api.azurewebsites.windows.net/subscriptions/00000000-0000-0000-0000-000000000000/webspaces/clitest.rg000001-WestUSwebspace/sites/clitestwebtraffic","repositorySiteName":"clitestwebtraffic","owner":null,"usageState":"Normal","enabled":true,"adminEnabled":true,"enabledHostNames":["clitestwebtraffic.azurewebsites.net","clitestwebtraffic.scm.azurewebsites.net"],"siteProperties":{"metadata":null,"properties":[],"appSettings":null},"availabilityState":"Normal","sslCertificates":null,"csrs":[],"cers":null,"siteMode":null,"hostNameSslStates":[{"name":"clitestwebtraffic.azurewebsites.net","sslState":"Disabled","ipBasedSslResult":null,"virtualIP":null,"thumbprint":null,"toUpdate":null,"toUpdateIpBasedSsl":null,"ipBasedSslState":"NotConfigured","hostType":"Standard"},{"name":"clitestwebtraffic.scm.azurewebsites.net","sslState":"Disabled","ipBasedSslResult":null,"virtualIP":null,"thumbprint":null,"toUpdate":null,"toUpdateIpBasedSsl":null,"ipBasedSslState":"NotConfigured","hostType":"Repository"}],"computeMode":null,"serverFarm":null,"serverFarmId":"/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/clitest.rg000001/providers/Microsoft.Web/serverfarms/clitesttrafficplan","reserved":false,"lastModifiedTimeUtc":"2017-10-24T23:52:41.197","storageRecoveryDefaultState":"Running","contentAvailabilityState":"Normal","runtimeAvailabilityState":"Normal","siteConfig":null,"deploymentId":"clitestwebtraffic","trafficManagerHostNames":null,"sku":"Standard","scmSiteAlsoStopped":false,"targetSwapSlot":null,"hostingEnvironment":null,"hostingEnvironmentProfile":null,"clientAffinityEnabled":true,"clientCertEnabled":false,"hostNamesDisabled":false,"domainVerificationIdentifiers":null,"kind":"app","outboundIpAddresses":"23.100.40.244,23.100.40.246,23.100.40.2,23.100.32.186","possibleOutboundIpAddresses":"23.100.40.244,23.100.40.246,23.100.40.2,23.100.32.186","containerSize":0,"dailyMemoryTimeQuota":0,"suspendedTill":null,"siteDisabledReason":0,"functionExecutionUnitsCache":null,"maxNumberOfWorkers":null,"homeStamp":"waws-prod-bay-015","cloningInfo":null,"snapshotInfo":null,"hostingEnvironmentId":null,"tags":null,"resourceGroup":"clitest.rg000001","defaultHostName":"clitestwebtraffic.azurewebsites.net","slotSwapStatus":null}}'}
     headers:
       cache-control: [no-cache]
-      content-length: ['2920']
+      content-length: ['2966']
       content-type: [application/json]
-      date: ['Wed, 02 Aug 2017 17:27:11 GMT']
-      etag: ['"1D30BB4926110D0"']
+      date: ['Tue, 24 Oct 2017 23:52:43 GMT']
+      etag: ['"1D34D232E0FFC30"']
       expires: ['-1']
       pragma: [no-cache]
       server: [Microsoft-IIS/8.0]
@@ -153,7 +153,7 @@ interactions:
       transfer-encoding: [chunked]
       vary: [Accept-Encoding]
       x-aspnet-version: [4.0.30319]
-      x-ms-ratelimit-remaining-subscription-writes: ['1199']
+      x-ms-ratelimit-remaining-subscription-writes: ['1193']
       x-powered-by: [ASP.NET]
     status: {code: 200, message: OK}
 - request:
@@ -165,21 +165,21 @@ interactions:
       Connection: [keep-alive]
       Content-Length: ['2']
       Content-Type: [application/json; charset=utf-8]
-      User-Agent: [python/3.5.2 (Windows-10-10.0.15063-SP0) requests/2.9.1 msrest/0.4.11
-          msrest_azure/0.4.11 websitemanagementclient/0.32.0 Azure-SDK-For-Python
-          AZURECLI/2.0.12+dev]
+      User-Agent: [python/3.5.3 (Windows-10-10.0.15063-SP0) requests/2.18.4 msrest/0.4.15
+          msrest_azure/0.4.11 websitemanagementclient/0.33.0 Azure-SDK-For-Python
+          AZURECLI/2.0.21]
       accept-language: [en-US]
     method: POST
     uri: https://management.azure.com/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/clitest.rg000001/providers/Microsoft.Web/sites/clitestwebtraffic/publishxml?api-version=2016-08-01
   response:
     body: {string: '<publishData><publishProfile profileName="clitestwebtraffic -
         Web Deploy" publishMethod="MSDeploy" publishUrl="clitestwebtraffic.scm.azurewebsites.net:443"
-        msdeploySite="clitestwebtraffic" userName="$clitestwebtraffic" userPWD="9gdeDsxNac9thrPlZmJbwmfsYYJRExW06FQAxQRsbM3iCibNGu2vamwyao3z"
+        msdeploySite="clitestwebtraffic" userName="$clitestwebtraffic" userPWD="QRFNkap89TBGWlE4h6b4MzPSn71mbXKX2XCPZSkeb432NLruCpSkLlQthJXj"
         destinationAppUrl="http://clitestwebtraffic.azurewebsites.net" SQLServerDBConnectionString=""
         mySQLDBConnectionString="" hostingProviderForumLink="" controlPanelLink="http://windows.azure.com"
         webSystem="WebSites"><databases /></publishProfile><publishProfile profileName="clitestwebtraffic
-        - FTP" publishMethod="FTP" publishUrl="ftp://waws-prod-bay-043.ftp.azurewebsites.windows.net/site/wwwroot"
-        ftpPassiveMode="True" userName="clitestwebtraffic\$clitestwebtraffic" userPWD="9gdeDsxNac9thrPlZmJbwmfsYYJRExW06FQAxQRsbM3iCibNGu2vamwyao3z"
+        - FTP" publishMethod="FTP" publishUrl="ftp://waws-prod-bay-015.ftp.azurewebsites.windows.net/site/wwwroot"
+        ftpPassiveMode="True" userName="clitestwebtraffic\$clitestwebtraffic" userPWD="QRFNkap89TBGWlE4h6b4MzPSn71mbXKX2XCPZSkeb432NLruCpSkLlQthJXj"
         destinationAppUrl="http://clitestwebtraffic.azurewebsites.net" SQLServerDBConnectionString=""
         mySQLDBConnectionString="" hostingProviderForumLink="" controlPanelLink="http://windows.azure.com"
         webSystem="WebSites"><databases /></publishProfile></publishData>'}
@@ -187,7 +187,7 @@ interactions:
       cache-control: [no-cache]
       content-length: ['1087']
       content-type: [application/xml]
-      date: ['Wed, 02 Aug 2017 17:27:13 GMT']
+      date: ['Tue, 24 Oct 2017 23:52:43 GMT']
       expires: ['-1']
       pragma: [no-cache]
       server: [Microsoft-IIS/8.0]
@@ -204,21 +204,21 @@ interactions:
       CommandName: [webapp deployment slot create]
       Connection: [keep-alive]
       Content-Type: [application/json; charset=utf-8]
-      User-Agent: [python/3.5.2 (Windows-10-10.0.15063-SP0) requests/2.9.1 msrest/0.4.11
-          msrest_azure/0.4.11 websitemanagementclient/0.32.0 Azure-SDK-For-Python
-          AZURECLI/2.0.12+dev]
+      User-Agent: [python/3.5.3 (Windows-10-10.0.15063-SP0) requests/2.18.4 msrest/0.4.15
+          msrest_azure/0.4.11 websitemanagementclient/0.33.0 Azure-SDK-For-Python
+          AZURECLI/2.0.21]
       accept-language: [en-US]
     method: GET
     uri: https://management.azure.com/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/clitest.rg000001/providers/Microsoft.Web/sites/clitestwebtraffic?api-version=2016-08-01
   response:
     body: {string: '{"id":"/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/clitest.rg000001/providers/Microsoft.Web/sites/clitestwebtraffic","name":"clitestwebtraffic","type":"Microsoft.Web/sites","kind":"app","location":"West
-        US","properties":{"name":"clitestwebtraffic","state":"Running","hostNames":["clitestwebtraffic.azurewebsites.net"],"webSpace":"clitest.rg000001-WestUSwebspace","selfLink":"https://waws-prod-bay-043.api.azurewebsites.windows.net/subscriptions/00000000-0000-0000-0000-000000000000/webspaces/clitest.rg000001-WestUSwebspace/sites/clitestwebtraffic","repositorySiteName":"clitestwebtraffic","owner":null,"usageState":"Normal","enabled":true,"adminEnabled":true,"enabledHostNames":["clitestwebtraffic.azurewebsites.net","clitestwebtraffic.scm.azurewebsites.net"],"siteProperties":{"metadata":null,"properties":[],"appSettings":null},"availabilityState":"Normal","sslCertificates":null,"csrs":[],"cers":null,"siteMode":null,"hostNameSslStates":[{"name":"clitestwebtraffic.azurewebsites.net","sslState":"Disabled","ipBasedSslResult":null,"virtualIP":null,"thumbprint":null,"toUpdate":null,"toUpdateIpBasedSsl":null,"ipBasedSslState":"NotConfigured","hostType":"Standard"},{"name":"clitestwebtraffic.scm.azurewebsites.net","sslState":"Disabled","ipBasedSslResult":null,"virtualIP":null,"thumbprint":null,"toUpdate":null,"toUpdateIpBasedSsl":null,"ipBasedSslState":"NotConfigured","hostType":"Repository"}],"computeMode":null,"serverFarm":null,"serverFarmId":"/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/clitest.rg000001/providers/Microsoft.Web/serverfarms/clitesttrafficplan","reserved":false,"lastModifiedTimeUtc":"2017-08-02T17:27:10.173","storageRecoveryDefaultState":"Running","contentAvailabilityState":"Normal","runtimeAvailabilityState":"Normal","siteConfig":null,"deploymentId":"clitestwebtraffic","trafficManagerHostNames":null,"sku":"Standard","premiumAppDeployed":null,"scmSiteAlsoStopped":false,"targetSwapSlot":null,"hostingEnvironment":null,"hostingEnvironmentProfile":null,"clientAffinityEnabled":true,"clientCertEnabled":false,"hostNamesDisabled":false,"domainVerificationIdentifiers":null,"kind":"app","outboundIpAddresses":"104.40.88.152,104.40.87.132,104.40.95.34,104.40.88.78","possibleOutboundIpAddresses":null,"containerSize":0,"dailyMemoryTimeQuota":0,"suspendedTill":null,"siteDisabledReason":0,"functionExecutionUnitsCache":null,"maxNumberOfWorkers":null,"homeStamp":"waws-prod-bay-043","cloningInfo":null,"hostingEnvironmentId":null,"tags":null,"resourceGroup":"clitest.rg000001","defaultHostName":"clitestwebtraffic.azurewebsites.net","slotSwapStatus":null}}'}
+        US","properties":{"name":"clitestwebtraffic","state":"Running","hostNames":["clitestwebtraffic.azurewebsites.net"],"webSpace":"clitest.rg000001-WestUSwebspace","selfLink":"https://waws-prod-bay-015.api.azurewebsites.windows.net/subscriptions/00000000-0000-0000-0000-000000000000/webspaces/clitest.rg000001-WestUSwebspace/sites/clitestwebtraffic","repositorySiteName":"clitestwebtraffic","owner":null,"usageState":"Normal","enabled":true,"adminEnabled":true,"enabledHostNames":["clitestwebtraffic.azurewebsites.net","clitestwebtraffic.scm.azurewebsites.net"],"siteProperties":{"metadata":null,"properties":[],"appSettings":null},"availabilityState":"Normal","sslCertificates":null,"csrs":[],"cers":null,"siteMode":null,"hostNameSslStates":[{"name":"clitestwebtraffic.azurewebsites.net","sslState":"Disabled","ipBasedSslResult":null,"virtualIP":null,"thumbprint":null,"toUpdate":null,"toUpdateIpBasedSsl":null,"ipBasedSslState":"NotConfigured","hostType":"Standard"},{"name":"clitestwebtraffic.scm.azurewebsites.net","sslState":"Disabled","ipBasedSslResult":null,"virtualIP":null,"thumbprint":null,"toUpdate":null,"toUpdateIpBasedSsl":null,"ipBasedSslState":"NotConfigured","hostType":"Repository"}],"computeMode":null,"serverFarm":null,"serverFarmId":"/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/clitest.rg000001/providers/Microsoft.Web/serverfarms/clitesttrafficplan","reserved":false,"lastModifiedTimeUtc":"2017-10-24T23:52:41.587","storageRecoveryDefaultState":"Running","contentAvailabilityState":"Normal","runtimeAvailabilityState":"Normal","siteConfig":null,"deploymentId":"clitestwebtraffic","trafficManagerHostNames":null,"sku":"Standard","scmSiteAlsoStopped":false,"targetSwapSlot":null,"hostingEnvironment":null,"hostingEnvironmentProfile":null,"clientAffinityEnabled":true,"clientCertEnabled":false,"hostNamesDisabled":false,"domainVerificationIdentifiers":null,"kind":"app","outboundIpAddresses":"23.100.40.244,23.100.40.246,23.100.40.2,23.100.32.186","possibleOutboundIpAddresses":"23.100.40.244,23.100.40.246,23.100.40.2,23.100.32.186","containerSize":0,"dailyMemoryTimeQuota":0,"suspendedTill":null,"siteDisabledReason":0,"functionExecutionUnitsCache":null,"maxNumberOfWorkers":null,"homeStamp":"waws-prod-bay-015","cloningInfo":null,"snapshotInfo":null,"hostingEnvironmentId":null,"tags":null,"resourceGroup":"clitest.rg000001","defaultHostName":"clitestwebtraffic.azurewebsites.net","slotSwapStatus":null}}'}
     headers:
       cache-control: [no-cache]
-      content-length: ['2921']
+      content-length: ['2966']
       content-type: [application/json]
-      date: ['Wed, 02 Aug 2017 17:27:14 GMT']
-      etag: ['"1D30BB4926110D0"']
+      date: ['Tue, 24 Oct 2017 23:52:44 GMT']
+      etag: ['"1D34D232E0FFC30"']
       expires: ['-1']
       pragma: [no-cache]
       server: [Microsoft-IIS/8.0]
@@ -229,32 +229,31 @@ interactions:
       x-powered-by: [ASP.NET]
     status: {code: 200, message: OK}
 - request:
-    body: 'b''{"properties": {"serverFarmId": "/subscriptions/8d57ddbd-c779-40ea-b660-1015f4bf027d/resourceGroups/clitest.rg000001/providers/Microsoft.Web/serverfarms/clitesttrafficplan",
-      "microService": "WebSites", "scmSiteAlsoStopped": false, "siteConfig": {"localMySqlEnabled":
-      false, "netFrameworkVersion": "v4.6"}, "reserved": false}, "location": "West
-      US"}'''
+    body: 'b''{"properties": {"siteConfig": {"localMySqlEnabled": false, "netFrameworkVersion":
+      "v4.6"}, "scmSiteAlsoStopped": false, "reserved": false, "serverFarmId": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/clitest.rg000001/providers/Microsoft.Web/serverfarms/clitesttrafficplan"},
+      "location": "West US"}'''
     headers:
       Accept: [application/json]
       Accept-Encoding: ['gzip, deflate']
       CommandName: [webapp deployment slot create]
       Connection: [keep-alive]
-      Content-Length: ['407']
+      Content-Length: ['379']
       Content-Type: [application/json; charset=utf-8]
-      User-Agent: [python/3.5.2 (Windows-10-10.0.15063-SP0) requests/2.9.1 msrest/0.4.11
-          msrest_azure/0.4.11 websitemanagementclient/0.32.0 Azure-SDK-For-Python
-          AZURECLI/2.0.12+dev]
+      User-Agent: [python/3.5.3 (Windows-10-10.0.15063-SP0) requests/2.18.4 msrest/0.4.15
+          msrest_azure/0.4.11 websitemanagementclient/0.33.0 Azure-SDK-For-Python
+          AZURECLI/2.0.21]
       accept-language: [en-US]
     method: PUT
     uri: https://management.azure.com/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/clitest.rg000001/providers/Microsoft.Web/sites/clitestwebtraffic/slots/staging?api-version=2016-08-01
   response:
     body: {string: '{"id":"/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/clitest.rg000001/providers/Microsoft.Web/sites/clitestwebtraffic/slots/staging","name":"clitestwebtraffic/staging","type":"Microsoft.Web/sites/slots","kind":"app","location":"West
-        US","properties":{"name":"clitestwebtraffic(staging)","state":"Running","hostNames":["clitestwebtraffic-staging.azurewebsites.net"],"webSpace":"clitest.rg000001-WestUSwebspace","selfLink":"https://waws-prod-bay-043.api.azurewebsites.windows.net/subscriptions/00000000-0000-0000-0000-000000000000/webspaces/clitest.rg000001-WestUSwebspace/sites/clitestwebtraffic","repositorySiteName":"clitestwebtraffic","owner":null,"usageState":"Normal","enabled":true,"adminEnabled":true,"enabledHostNames":["clitestwebtraffic-staging.azurewebsites.net","clitestwebtraffic-staging.scm.azurewebsites.net"],"siteProperties":{"metadata":null,"properties":[],"appSettings":null},"availabilityState":"Normal","sslCertificates":null,"csrs":[],"cers":null,"siteMode":null,"hostNameSslStates":[{"name":"clitestwebtraffic-staging.azurewebsites.net","sslState":"Disabled","ipBasedSslResult":null,"virtualIP":null,"thumbprint":null,"toUpdate":null,"toUpdateIpBasedSsl":null,"ipBasedSslState":"NotConfigured","hostType":"Standard"},{"name":"clitestwebtraffic-staging.scm.azurewebsites.net","sslState":"Disabled","ipBasedSslResult":null,"virtualIP":null,"thumbprint":null,"toUpdate":null,"toUpdateIpBasedSsl":null,"ipBasedSslState":"NotConfigured","hostType":"Repository"}],"computeMode":null,"serverFarm":null,"serverFarmId":"/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/clitest.rg000001/providers/Microsoft.Web/serverfarms/clitesttrafficplan","reserved":false,"lastModifiedTimeUtc":"2017-08-02T17:27:16.703","storageRecoveryDefaultState":"Running","contentAvailabilityState":"Normal","runtimeAvailabilityState":"Normal","siteConfig":null,"deploymentId":"clitestwebtraffic__afb2","trafficManagerHostNames":null,"sku":"Standard","premiumAppDeployed":null,"scmSiteAlsoStopped":false,"targetSwapSlot":null,"hostingEnvironment":null,"hostingEnvironmentProfile":null,"clientAffinityEnabled":true,"clientCertEnabled":false,"hostNamesDisabled":false,"domainVerificationIdentifiers":null,"kind":"app","outboundIpAddresses":"104.40.88.152,104.40.87.132,104.40.95.34,104.40.88.78","possibleOutboundIpAddresses":null,"containerSize":0,"dailyMemoryTimeQuota":0,"suspendedTill":null,"siteDisabledReason":0,"functionExecutionUnitsCache":null,"maxNumberOfWorkers":null,"homeStamp":"waws-prod-bay-043","cloningInfo":null,"hostingEnvironmentId":null,"tags":null,"resourceGroup":"clitest.rg000001","defaultHostName":"clitestwebtraffic-staging.azurewebsites.net","slotSwapStatus":null}}'}
+        US","properties":{"name":"clitestwebtraffic(staging)","state":"Running","hostNames":["clitestwebtraffic-staging.azurewebsites.net"],"webSpace":"clitest.rg000001-WestUSwebspace","selfLink":"https://waws-prod-bay-015.api.azurewebsites.windows.net/subscriptions/00000000-0000-0000-0000-000000000000/webspaces/clitest.rg000001-WestUSwebspace/sites/clitestwebtraffic","repositorySiteName":"clitestwebtraffic","owner":null,"usageState":"Normal","enabled":true,"adminEnabled":true,"enabledHostNames":["clitestwebtraffic-staging.azurewebsites.net","clitestwebtraffic-staging.scm.azurewebsites.net"],"siteProperties":{"metadata":null,"properties":[],"appSettings":null},"availabilityState":"Normal","sslCertificates":null,"csrs":[],"cers":null,"siteMode":null,"hostNameSslStates":[{"name":"clitestwebtraffic-staging.azurewebsites.net","sslState":"Disabled","ipBasedSslResult":null,"virtualIP":null,"thumbprint":null,"toUpdate":null,"toUpdateIpBasedSsl":null,"ipBasedSslState":"NotConfigured","hostType":"Standard"},{"name":"clitestwebtraffic-staging.scm.azurewebsites.net","sslState":"Disabled","ipBasedSslResult":null,"virtualIP":null,"thumbprint":null,"toUpdate":null,"toUpdateIpBasedSsl":null,"ipBasedSslState":"NotConfigured","hostType":"Repository"}],"computeMode":null,"serverFarm":null,"serverFarmId":"/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/clitest.rg000001/providers/Microsoft.Web/serverfarms/clitesttrafficplan","reserved":false,"lastModifiedTimeUtc":"2017-10-24T23:52:47.82","storageRecoveryDefaultState":"Running","contentAvailabilityState":"Normal","runtimeAvailabilityState":"Normal","siteConfig":null,"deploymentId":"clitestwebtraffic__c3b1","trafficManagerHostNames":null,"sku":"Standard","scmSiteAlsoStopped":false,"targetSwapSlot":null,"hostingEnvironment":null,"hostingEnvironmentProfile":null,"clientAffinityEnabled":true,"clientCertEnabled":false,"hostNamesDisabled":false,"domainVerificationIdentifiers":null,"kind":"app","outboundIpAddresses":"23.100.40.244,23.100.40.246,23.100.40.2,23.100.32.186","possibleOutboundIpAddresses":"23.100.40.244,23.100.40.246,23.100.40.2,23.100.32.186","containerSize":0,"dailyMemoryTimeQuota":0,"suspendedTill":null,"siteDisabledReason":0,"functionExecutionUnitsCache":null,"maxNumberOfWorkers":null,"homeStamp":"waws-prod-bay-015","cloningInfo":null,"snapshotInfo":null,"hostingEnvironmentId":null,"tags":null,"resourceGroup":"clitest.rg000001","defaultHostName":"clitestwebtraffic-staging.azurewebsites.net","slotSwapStatus":null}}'}
     headers:
       cache-control: [no-cache]
-      content-length: ['3012']
+      content-length: ['3056']
       content-type: [application/json]
-      date: ['Wed, 02 Aug 2017 17:27:25 GMT']
-      etag: ['"1D30BB4926110D0"']
+      date: ['Tue, 24 Oct 2017 23:52:48 GMT']
+      etag: ['"1D34D232E0FFC30"']
       expires: ['-1']
       pragma: [no-cache]
       server: [Microsoft-IIS/8.0]
@@ -262,7 +261,7 @@ interactions:
       transfer-encoding: [chunked]
       vary: [Accept-Encoding]
       x-aspnet-version: [4.0.30319]
-      x-ms-ratelimit-remaining-subscription-writes: ['1199']
+      x-ms-ratelimit-remaining-subscription-writes: ['1188']
       x-powered-by: [ASP.NET]
     status: {code: 200, message: OK}
 - request:
@@ -273,21 +272,21 @@ interactions:
       CommandName: [webapp traffic-routing set]
       Connection: [keep-alive]
       Content-Type: [application/json; charset=utf-8]
-      User-Agent: [python/3.5.2 (Windows-10-10.0.15063-SP0) requests/2.9.1 msrest/0.4.11
-          msrest_azure/0.4.11 websitemanagementclient/0.32.0 Azure-SDK-For-Python
-          AZURECLI/2.0.12+dev]
+      User-Agent: [python/3.5.3 (Windows-10-10.0.15063-SP0) requests/2.18.4 msrest/0.4.15
+          msrest_azure/0.4.11 websitemanagementclient/0.33.0 Azure-SDK-For-Python
+          AZURECLI/2.0.21]
       accept-language: [en-US]
     method: GET
     uri: https://management.azure.com/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/clitest.rg000001/providers/Microsoft.Web/sites/clitestwebtraffic?api-version=2016-08-01
   response:
     body: {string: '{"id":"/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/clitest.rg000001/providers/Microsoft.Web/sites/clitestwebtraffic","name":"clitestwebtraffic","type":"Microsoft.Web/sites","kind":"app","location":"West
-        US","properties":{"name":"clitestwebtraffic","state":"Running","hostNames":["clitestwebtraffic.azurewebsites.net"],"webSpace":"clitest.rg000001-WestUSwebspace","selfLink":"https://waws-prod-bay-043.api.azurewebsites.windows.net/subscriptions/00000000-0000-0000-0000-000000000000/webspaces/clitest.rg000001-WestUSwebspace/sites/clitestwebtraffic","repositorySiteName":"clitestwebtraffic","owner":null,"usageState":"Normal","enabled":true,"adminEnabled":true,"enabledHostNames":["clitestwebtraffic.azurewebsites.net","clitestwebtraffic.scm.azurewebsites.net"],"siteProperties":{"metadata":null,"properties":[],"appSettings":null},"availabilityState":"Normal","sslCertificates":null,"csrs":[],"cers":null,"siteMode":null,"hostNameSslStates":[{"name":"clitestwebtraffic.azurewebsites.net","sslState":"Disabled","ipBasedSslResult":null,"virtualIP":null,"thumbprint":null,"toUpdate":null,"toUpdateIpBasedSsl":null,"ipBasedSslState":"NotConfigured","hostType":"Standard"},{"name":"clitestwebtraffic.scm.azurewebsites.net","sslState":"Disabled","ipBasedSslResult":null,"virtualIP":null,"thumbprint":null,"toUpdate":null,"toUpdateIpBasedSsl":null,"ipBasedSslState":"NotConfigured","hostType":"Repository"}],"computeMode":null,"serverFarm":null,"serverFarmId":"/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/clitest.rg000001/providers/Microsoft.Web/serverfarms/clitesttrafficplan","reserved":false,"lastModifiedTimeUtc":"2017-08-02T17:27:10.173","storageRecoveryDefaultState":"Running","contentAvailabilityState":"Normal","runtimeAvailabilityState":"Normal","siteConfig":null,"deploymentId":"clitestwebtraffic","trafficManagerHostNames":null,"sku":"Standard","premiumAppDeployed":null,"scmSiteAlsoStopped":false,"targetSwapSlot":null,"hostingEnvironment":null,"hostingEnvironmentProfile":null,"clientAffinityEnabled":true,"clientCertEnabled":false,"hostNamesDisabled":false,"domainVerificationIdentifiers":null,"kind":"app","outboundIpAddresses":"104.40.88.152,104.40.87.132,104.40.95.34,104.40.88.78","possibleOutboundIpAddresses":null,"containerSize":0,"dailyMemoryTimeQuota":0,"suspendedTill":null,"siteDisabledReason":0,"functionExecutionUnitsCache":null,"maxNumberOfWorkers":null,"homeStamp":"waws-prod-bay-043","cloningInfo":null,"hostingEnvironmentId":null,"tags":null,"resourceGroup":"clitest.rg000001","defaultHostName":"clitestwebtraffic.azurewebsites.net","slotSwapStatus":null}}'}
+        US","properties":{"name":"clitestwebtraffic","state":"Running","hostNames":["clitestwebtraffic.azurewebsites.net"],"webSpace":"clitest.rg000001-WestUSwebspace","selfLink":"https://waws-prod-bay-015.api.azurewebsites.windows.net/subscriptions/00000000-0000-0000-0000-000000000000/webspaces/clitest.rg000001-WestUSwebspace/sites/clitestwebtraffic","repositorySiteName":"clitestwebtraffic","owner":null,"usageState":"Normal","enabled":true,"adminEnabled":true,"enabledHostNames":["clitestwebtraffic.azurewebsites.net","clitestwebtraffic.scm.azurewebsites.net"],"siteProperties":{"metadata":null,"properties":[],"appSettings":null},"availabilityState":"Normal","sslCertificates":null,"csrs":[],"cers":null,"siteMode":null,"hostNameSslStates":[{"name":"clitestwebtraffic.azurewebsites.net","sslState":"Disabled","ipBasedSslResult":null,"virtualIP":null,"thumbprint":null,"toUpdate":null,"toUpdateIpBasedSsl":null,"ipBasedSslState":"NotConfigured","hostType":"Standard"},{"name":"clitestwebtraffic.scm.azurewebsites.net","sslState":"Disabled","ipBasedSslResult":null,"virtualIP":null,"thumbprint":null,"toUpdate":null,"toUpdateIpBasedSsl":null,"ipBasedSslState":"NotConfigured","hostType":"Repository"}],"computeMode":null,"serverFarm":null,"serverFarmId":"/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/clitest.rg000001/providers/Microsoft.Web/serverfarms/clitesttrafficplan","reserved":false,"lastModifiedTimeUtc":"2017-10-24T23:52:41.587","storageRecoveryDefaultState":"Running","contentAvailabilityState":"Normal","runtimeAvailabilityState":"Normal","siteConfig":null,"deploymentId":"clitestwebtraffic","trafficManagerHostNames":null,"sku":"Standard","scmSiteAlsoStopped":false,"targetSwapSlot":null,"hostingEnvironment":null,"hostingEnvironmentProfile":null,"clientAffinityEnabled":true,"clientCertEnabled":false,"hostNamesDisabled":false,"domainVerificationIdentifiers":null,"kind":"app","outboundIpAddresses":"23.100.40.244,23.100.40.246,23.100.40.2,23.100.32.186","possibleOutboundIpAddresses":"23.100.40.244,23.100.40.246,23.100.40.2,23.100.32.186","containerSize":0,"dailyMemoryTimeQuota":0,"suspendedTill":null,"siteDisabledReason":0,"functionExecutionUnitsCache":null,"maxNumberOfWorkers":null,"homeStamp":"waws-prod-bay-015","cloningInfo":null,"snapshotInfo":null,"hostingEnvironmentId":null,"tags":null,"resourceGroup":"clitest.rg000001","defaultHostName":"clitestwebtraffic.azurewebsites.net","slotSwapStatus":null}}'}
     headers:
       cache-control: [no-cache]
-      content-length: ['2921']
+      content-length: ['2966']
       content-type: [application/json]
-      date: ['Wed, 02 Aug 2017 17:27:26 GMT']
-      etag: ['"1D30BB4926110D0"']
+      date: ['Tue, 24 Oct 2017 23:52:49 GMT']
+      etag: ['"1D34D232E0FFC30"']
       expires: ['-1']
       pragma: [no-cache]
       server: [Microsoft-IIS/8.0]
@@ -305,9 +304,9 @@ interactions:
       CommandName: [webapp traffic-routing set]
       Connection: [keep-alive]
       Content-Type: [application/json; charset=utf-8]
-      User-Agent: [python/3.5.2 (Windows-10-10.0.15063-SP0) requests/2.9.1 msrest/0.4.11
-          msrest_azure/0.4.11 websitemanagementclient/0.32.0 Azure-SDK-For-Python
-          AZURECLI/2.0.12+dev]
+      User-Agent: [python/3.5.3 (Windows-10-10.0.15063-SP0) requests/2.18.4 msrest/0.4.15
+          msrest_azure/0.4.11 websitemanagementclient/0.33.0 Azure-SDK-For-Python
+          AZURECLI/2.0.21]
       accept-language: [en-US]
     method: GET
     uri: https://management.azure.com/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/clitest.rg000001/providers/Microsoft.Web/sites/clitestwebtraffic/config/web?api-version=2016-08-01
@@ -318,7 +317,7 @@ interactions:
       cache-control: [no-cache]
       content-length: ['2412']
       content-type: [application/json]
-      date: ['Wed, 02 Aug 2017 17:27:28 GMT']
+      date: ['Tue, 24 Oct 2017 23:52:48 GMT']
       expires: ['-1']
       pragma: [no-cache]
       server: [Microsoft-IIS/8.0]
@@ -329,30 +328,28 @@ interactions:
       x-powered-by: [ASP.NET]
     status: {code: 200, message: OK}
 - request:
-    body: '{"properties": {"numberOfWorkers": 1, "alwaysOn": false, "publishingUsername":
-      "$clitestwebtraffic", "logsDirectorySizeLimit": 35, "phpVersion": "5.6", "localMySqlEnabled":
-      false, "virtualApplications": [{"virtualPath": "/", "preloadEnabled": false,
-      "physicalPath": "site\\wwwroot"}], "nodeVersion": "", "autoHealEnabled": false,
-      "autoHealRules": {}, "remoteDebuggingEnabled": false, "appCommandLine": "",
-      "scmType": "None", "loadBalancing": "LeastRequests", "httpLoggingEnabled": false,
-      "detailedErrorLoggingEnabled": false, "defaultDocuments": ["Default.htm", "Default.html",
-      "Default.asp", "index.htm", "index.html", "iisstart.htm", "default.aspx", "index.php",
-      "hostingstart.html"], "pythonVersion": "", "netFrameworkVersion": "v4.0", "webSocketsEnabled":
-      false, "experiments": {"rampUpRules": [{"actionHostName": "staging.azurewebsites.net",
-      "name": "staging", "reroutePercentage": 15.0}]}, "requestTracingEnabled": false,
-      "linuxFxVersion": "", "managedPipelineMode": "Integrated", "vnetName": "", "use32BitWorkerProcess":
-      true}, "type": "Microsoft.Web/sites/config", "location": "West US", "name":
-      "clitestwebtraffic"}'
+    body: '{"properties": {"experiments": {"rampUpRules": [{"name": "staging", "reroutePercentage":
+      15.0, "actionHostName": "staging.azurewebsites.net"}]}, "netFrameworkVersion":
+      "v4.0", "publishingUsername": "$clitestwebtraffic", "virtualApplications": [{"preloadEnabled":
+      false, "physicalPath": "site\\wwwroot", "virtualPath": "/"}], "localMySqlEnabled":
+      false, "alwaysOn": false, "pythonVersion": "", "defaultDocuments": ["Default.htm",
+      "Default.html", "Default.asp", "index.htm", "index.html", "iisstart.htm", "default.aspx",
+      "index.php", "hostingstart.html"], "httpLoggingEnabled": false, "linuxFxVersion":
+      "", "appCommandLine": "", "scmType": "None", "autoHealEnabled": false, "nodeVersion":
+      "", "requestTracingEnabled": false, "detailedErrorLoggingEnabled": false, "use32BitWorkerProcess":
+      true, "loadBalancing": "LeastRequests", "logsDirectorySizeLimit": 35, "autoHealRules":
+      {}, "vnetName": "", "phpVersion": "5.6", "numberOfWorkers": 1, "managedPipelineMode":
+      "Integrated", "remoteDebuggingEnabled": false, "webSocketsEnabled": false}}'
     headers:
       Accept: [application/json]
       Accept-Encoding: ['gzip, deflate']
       CommandName: [webapp traffic-routing set]
       Connection: [keep-alive]
-      Content-Length: ['1124']
+      Content-Length: ['1034']
       Content-Type: [application/json; charset=utf-8]
-      User-Agent: [python/3.5.2 (Windows-10-10.0.15063-SP0) requests/2.9.1 msrest/0.4.11
-          msrest_azure/0.4.11 websitemanagementclient/0.32.0 Azure-SDK-For-Python
-          AZURECLI/2.0.12+dev]
+      User-Agent: [python/3.5.3 (Windows-10-10.0.15063-SP0) requests/2.18.4 msrest/0.4.15
+          msrest_azure/0.4.11 websitemanagementclient/0.33.0 Azure-SDK-For-Python
+          AZURECLI/2.0.21]
       accept-language: [en-US]
     method: PATCH
     uri: https://management.azure.com/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/clitest.rg000001/providers/Microsoft.Web/sites/clitestwebtraffic/config/web?api-version=2016-08-01
@@ -363,8 +360,8 @@ interactions:
       cache-control: [no-cache]
       content-length: ['2850']
       content-type: [application/json]
-      date: ['Wed, 02 Aug 2017 17:27:30 GMT']
-      etag: ['"1D30BB49E8D8550"']
+      date: ['Tue, 24 Oct 2017 23:52:50 GMT']
+      etag: ['"1D34D23347ABF10"']
       expires: ['-1']
       pragma: [no-cache]
       server: [Microsoft-IIS/8.0]
@@ -372,7 +369,7 @@ interactions:
       transfer-encoding: [chunked]
       vary: [Accept-Encoding]
       x-aspnet-version: [4.0.30319]
-      x-ms-ratelimit-remaining-subscription-writes: ['1199']
+      x-ms-ratelimit-remaining-subscription-writes: ['1197']
       x-powered-by: [ASP.NET]
     status: {code: 200, message: OK}
 - request:
@@ -383,9 +380,9 @@ interactions:
       CommandName: [webapp traffic-routing show]
       Connection: [keep-alive]
       Content-Type: [application/json; charset=utf-8]
-      User-Agent: [python/3.5.2 (Windows-10-10.0.15063-SP0) requests/2.9.1 msrest/0.4.11
-          msrest_azure/0.4.11 websitemanagementclient/0.32.0 Azure-SDK-For-Python
-          AZURECLI/2.0.12+dev]
+      User-Agent: [python/3.5.3 (Windows-10-10.0.15063-SP0) requests/2.18.4 msrest/0.4.15
+          msrest_azure/0.4.11 websitemanagementclient/0.33.0 Azure-SDK-For-Python
+          AZURECLI/2.0.21]
       accept-language: [en-US]
     method: GET
     uri: https://management.azure.com/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/clitest.rg000001/providers/Microsoft.Web/sites/clitestwebtraffic/config/web?api-version=2016-08-01
@@ -396,7 +393,7 @@ interactions:
       cache-control: [no-cache]
       content-length: ['2868']
       content-type: [application/json]
-      date: ['Wed, 02 Aug 2017 17:27:31 GMT']
+      date: ['Tue, 24 Oct 2017 23:52:52 GMT']
       expires: ['-1']
       pragma: [no-cache]
       server: [Microsoft-IIS/8.0]
@@ -414,21 +411,21 @@ interactions:
       CommandName: [webapp traffic-routing clear]
       Connection: [keep-alive]
       Content-Type: [application/json; charset=utf-8]
-      User-Agent: [python/3.5.2 (Windows-10-10.0.15063-SP0) requests/2.9.1 msrest/0.4.11
-          msrest_azure/0.4.11 websitemanagementclient/0.32.0 Azure-SDK-For-Python
-          AZURECLI/2.0.12+dev]
+      User-Agent: [python/3.5.3 (Windows-10-10.0.15063-SP0) requests/2.18.4 msrest/0.4.15
+          msrest_azure/0.4.11 websitemanagementclient/0.33.0 Azure-SDK-For-Python
+          AZURECLI/2.0.21]
       accept-language: [en-US]
     method: GET
     uri: https://management.azure.com/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/clitest.rg000001/providers/Microsoft.Web/sites/clitestwebtraffic?api-version=2016-08-01
   response:
     body: {string: '{"id":"/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/clitest.rg000001/providers/Microsoft.Web/sites/clitestwebtraffic","name":"clitestwebtraffic","type":"Microsoft.Web/sites","kind":"app","location":"West
-        US","properties":{"name":"clitestwebtraffic","state":"Running","hostNames":["clitestwebtraffic.azurewebsites.net"],"webSpace":"clitest.rg000001-WestUSwebspace","selfLink":"https://waws-prod-bay-043.api.azurewebsites.windows.net/subscriptions/00000000-0000-0000-0000-000000000000/webspaces/clitest.rg000001-WestUSwebspace/sites/clitestwebtraffic","repositorySiteName":"clitestwebtraffic","owner":null,"usageState":"Normal","enabled":true,"adminEnabled":true,"enabledHostNames":["clitestwebtraffic.azurewebsites.net","clitestwebtraffic.scm.azurewebsites.net"],"siteProperties":{"metadata":null,"properties":[],"appSettings":null},"availabilityState":"Normal","sslCertificates":null,"csrs":[],"cers":null,"siteMode":null,"hostNameSslStates":[{"name":"clitestwebtraffic.azurewebsites.net","sslState":"Disabled","ipBasedSslResult":null,"virtualIP":null,"thumbprint":null,"toUpdate":null,"toUpdateIpBasedSsl":null,"ipBasedSslState":"NotConfigured","hostType":"Standard"},{"name":"clitestwebtraffic.scm.azurewebsites.net","sslState":"Disabled","ipBasedSslResult":null,"virtualIP":null,"thumbprint":null,"toUpdate":null,"toUpdateIpBasedSsl":null,"ipBasedSslState":"NotConfigured","hostType":"Repository"}],"computeMode":null,"serverFarm":null,"serverFarmId":"/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/clitest.rg000001/providers/Microsoft.Web/serverfarms/clitesttrafficplan","reserved":false,"lastModifiedTimeUtc":"2017-08-02T17:27:30.597","storageRecoveryDefaultState":"Running","contentAvailabilityState":"Normal","runtimeAvailabilityState":"Normal","siteConfig":null,"deploymentId":"clitestwebtraffic","trafficManagerHostNames":null,"sku":"Standard","premiumAppDeployed":null,"scmSiteAlsoStopped":false,"targetSwapSlot":null,"hostingEnvironment":null,"hostingEnvironmentProfile":null,"clientAffinityEnabled":true,"clientCertEnabled":false,"hostNamesDisabled":false,"domainVerificationIdentifiers":null,"kind":"app","outboundIpAddresses":"104.40.88.152,104.40.87.132,104.40.95.34,104.40.88.78","possibleOutboundIpAddresses":null,"containerSize":0,"dailyMemoryTimeQuota":0,"suspendedTill":null,"siteDisabledReason":0,"functionExecutionUnitsCache":null,"maxNumberOfWorkers":null,"homeStamp":"waws-prod-bay-043","cloningInfo":null,"hostingEnvironmentId":null,"tags":null,"resourceGroup":"clitest.rg000001","defaultHostName":"clitestwebtraffic.azurewebsites.net","slotSwapStatus":null}}'}
+        US","properties":{"name":"clitestwebtraffic","state":"Running","hostNames":["clitestwebtraffic.azurewebsites.net"],"webSpace":"clitest.rg000001-WestUSwebspace","selfLink":"https://waws-prod-bay-015.api.azurewebsites.windows.net/subscriptions/00000000-0000-0000-0000-000000000000/webspaces/clitest.rg000001-WestUSwebspace/sites/clitestwebtraffic","repositorySiteName":"clitestwebtraffic","owner":null,"usageState":"Normal","enabled":true,"adminEnabled":true,"enabledHostNames":["clitestwebtraffic.azurewebsites.net","clitestwebtraffic.scm.azurewebsites.net"],"siteProperties":{"metadata":null,"properties":[],"appSettings":null},"availabilityState":"Normal","sslCertificates":null,"csrs":[],"cers":null,"siteMode":null,"hostNameSslStates":[{"name":"clitestwebtraffic.azurewebsites.net","sslState":"Disabled","ipBasedSslResult":null,"virtualIP":null,"thumbprint":null,"toUpdate":null,"toUpdateIpBasedSsl":null,"ipBasedSslState":"NotConfigured","hostType":"Standard"},{"name":"clitestwebtraffic.scm.azurewebsites.net","sslState":"Disabled","ipBasedSslResult":null,"virtualIP":null,"thumbprint":null,"toUpdate":null,"toUpdateIpBasedSsl":null,"ipBasedSslState":"NotConfigured","hostType":"Repository"}],"computeMode":null,"serverFarm":null,"serverFarmId":"/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/clitest.rg000001/providers/Microsoft.Web/serverfarms/clitesttrafficplan","reserved":false,"lastModifiedTimeUtc":"2017-10-24T23:52:52.353","storageRecoveryDefaultState":"Running","contentAvailabilityState":"Normal","runtimeAvailabilityState":"Normal","siteConfig":null,"deploymentId":"clitestwebtraffic","trafficManagerHostNames":null,"sku":"Standard","scmSiteAlsoStopped":false,"targetSwapSlot":null,"hostingEnvironment":null,"hostingEnvironmentProfile":null,"clientAffinityEnabled":true,"clientCertEnabled":false,"hostNamesDisabled":false,"domainVerificationIdentifiers":null,"kind":"app","outboundIpAddresses":"23.100.40.244,23.100.40.246,23.100.40.2,23.100.32.186","possibleOutboundIpAddresses":"23.100.40.244,23.100.40.246,23.100.40.2,23.100.32.186","containerSize":0,"dailyMemoryTimeQuota":0,"suspendedTill":null,"siteDisabledReason":0,"functionExecutionUnitsCache":null,"maxNumberOfWorkers":null,"homeStamp":"waws-prod-bay-015","cloningInfo":null,"snapshotInfo":null,"hostingEnvironmentId":null,"tags":null,"resourceGroup":"clitest.rg000001","defaultHostName":"clitestwebtraffic.azurewebsites.net","slotSwapStatus":null}}'}
     headers:
       cache-control: [no-cache]
-      content-length: ['2921']
+      content-length: ['2966']
       content-type: [application/json]
-      date: ['Wed, 02 Aug 2017 17:27:32 GMT']
-      etag: ['"1D30BB49E8D8550"']
+      date: ['Tue, 24 Oct 2017 23:52:53 GMT']
+      etag: ['"1D34D23347ABF10"']
       expires: ['-1']
       pragma: [no-cache]
       server: [Microsoft-IIS/8.0]
@@ -446,9 +443,9 @@ interactions:
       CommandName: [webapp traffic-routing clear]
       Connection: [keep-alive]
       Content-Type: [application/json; charset=utf-8]
-      User-Agent: [python/3.5.2 (Windows-10-10.0.15063-SP0) requests/2.9.1 msrest/0.4.11
-          msrest_azure/0.4.11 websitemanagementclient/0.32.0 Azure-SDK-For-Python
-          AZURECLI/2.0.12+dev]
+      User-Agent: [python/3.5.3 (Windows-10-10.0.15063-SP0) requests/2.18.4 msrest/0.4.15
+          msrest_azure/0.4.11 websitemanagementclient/0.33.0 Azure-SDK-For-Python
+          AZURECLI/2.0.21]
       accept-language: [en-US]
     method: GET
     uri: https://management.azure.com/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/clitest.rg000001/providers/Microsoft.Web/sites/clitestwebtraffic/config/web?api-version=2016-08-01
@@ -459,7 +456,7 @@ interactions:
       cache-control: [no-cache]
       content-length: ['2868']
       content-type: [application/json]
-      date: ['Wed, 02 Aug 2017 17:27:33 GMT']
+      date: ['Tue, 24 Oct 2017 23:52:53 GMT']
       expires: ['-1']
       pragma: [no-cache]
       server: [Microsoft-IIS/8.0]
@@ -470,29 +467,28 @@ interactions:
       x-powered-by: [ASP.NET]
     status: {code: 200, message: OK}
 - request:
-    body: '{"properties": {"numberOfWorkers": 1, "alwaysOn": false, "publishingUsername":
-      "$clitestwebtraffic", "logsDirectorySizeLimit": 35, "phpVersion": "5.6", "localMySqlEnabled":
-      false, "virtualApplications": [{"virtualPath": "/", "preloadEnabled": false,
-      "physicalPath": "site\\wwwroot"}], "nodeVersion": "", "autoHealEnabled": false,
-      "remoteDebuggingEnabled": false, "appCommandLine": "", "autoHealRules": {},
-      "scmType": "None", "loadBalancing": "LeastRequests", "httpLoggingEnabled": false,
-      "remoteDebuggingVersion": "VS2012", "detailedErrorLoggingEnabled": false, "defaultDocuments":
-      ["Default.htm", "Default.html", "Default.asp", "index.htm", "index.html", "iisstart.htm",
-      "default.aspx", "index.php", "hostingstart.html"], "pythonVersion": "", "netFrameworkVersion":
-      "v4.0", "webSocketsEnabled": false, "experiments": {"rampUpRules": []}, "requestTracingEnabled":
-      false, "linuxFxVersion": "", "managedPipelineMode": "Integrated", "vnetName":
-      "", "use32BitWorkerProcess": true}, "type": "Microsoft.Web/sites/config", "location":
-      "West US", "name": "clitestwebtraffic"}'
+    body: '{"properties": {"experiments": {"rampUpRules": []}, "netFrameworkVersion":
+      "v4.0", "publishingUsername": "$clitestwebtraffic", "virtualApplications": [{"preloadEnabled":
+      false, "physicalPath": "site\\wwwroot", "virtualPath": "/"}], "localMySqlEnabled":
+      false, "alwaysOn": false, "pythonVersion": "", "remoteDebuggingVersion": "VS2012",
+      "defaultDocuments": ["Default.htm", "Default.html", "Default.asp", "index.htm",
+      "index.html", "iisstart.htm", "default.aspx", "index.php", "hostingstart.html"],
+      "httpLoggingEnabled": false, "linuxFxVersion": "", "appCommandLine": "", "scmType":
+      "None", "autoHealEnabled": false, "nodeVersion": "", "requestTracingEnabled":
+      false, "detailedErrorLoggingEnabled": false, "use32BitWorkerProcess": true,
+      "loadBalancing": "LeastRequests", "logsDirectorySizeLimit": 35, "autoHealRules":
+      {}, "vnetName": "", "phpVersion": "5.6", "numberOfWorkers": 1, "managedPipelineMode":
+      "Integrated", "remoteDebuggingEnabled": false, "webSocketsEnabled": false}}'
     headers:
       Accept: [application/json]
       Accept-Encoding: ['gzip, deflate']
       CommandName: [webapp traffic-routing clear]
       Connection: [keep-alive]
-      Content-Length: ['1067']
+      Content-Length: ['977']
       Content-Type: [application/json; charset=utf-8]
-      User-Agent: [python/3.5.2 (Windows-10-10.0.15063-SP0) requests/2.9.1 msrest/0.4.11
-          msrest_azure/0.4.11 websitemanagementclient/0.32.0 Azure-SDK-For-Python
-          AZURECLI/2.0.12+dev]
+      User-Agent: [python/3.5.3 (Windows-10-10.0.15063-SP0) requests/2.18.4 msrest/0.4.15
+          msrest_azure/0.4.11 websitemanagementclient/0.33.0 Azure-SDK-For-Python
+          AZURECLI/2.0.21]
       accept-language: [en-US]
     method: PATCH
     uri: https://management.azure.com/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/clitest.rg000001/providers/Microsoft.Web/sites/clitestwebtraffic/config/web?api-version=2016-08-01
@@ -503,8 +499,8 @@ interactions:
       cache-control: [no-cache]
       content-length: ['2398']
       content-type: [application/json]
-      date: ['Wed, 02 Aug 2017 17:27:35 GMT']
-      etag: ['"1D30BB4A1932430"']
+      date: ['Tue, 24 Oct 2017 23:52:55 GMT']
+      etag: ['"1D34D2337296450"']
       expires: ['-1']
       pragma: [no-cache]
       server: [Microsoft-IIS/8.0]
@@ -512,7 +508,7 @@ interactions:
       transfer-encoding: [chunked]
       vary: [Accept-Encoding]
       x-aspnet-version: [4.0.30319]
-      x-ms-ratelimit-remaining-subscription-writes: ['1199']
+      x-ms-ratelimit-remaining-subscription-writes: ['1198']
       x-powered-by: [ASP.NET]
     status: {code: 200, message: OK}
 - request:
@@ -524,9 +520,9 @@ interactions:
       Connection: [keep-alive]
       Content-Length: ['0']
       Content-Type: [application/json; charset=utf-8]
-      User-Agent: [python/3.5.2 (Windows-10-10.0.15063-SP0) requests/2.9.1 msrest/0.4.11
-          msrest_azure/0.4.11 resourcemanagementclient/1.1.0 Azure-SDK-For-Python
-          AZURECLI/2.0.12+dev]
+      User-Agent: [python/3.5.3 (Windows-10-10.0.15063-SP0) requests/2.18.4 msrest/0.4.15
+          msrest_azure/0.4.11 resourcemanagementclient/1.2.1 Azure-SDK-For-Python
+          AZURECLI/2.0.21]
       accept-language: [en-US]
     method: DELETE
     uri: https://management.azure.com/subscriptions/00000000-0000-0000-0000-000000000000/resourcegroups/clitest.rg000001?api-version=2017-05-10
@@ -535,11 +531,11 @@ interactions:
     headers:
       cache-control: [no-cache]
       content-length: ['0']
-      date: ['Wed, 02 Aug 2017 17:27:36 GMT']
+      date: ['Tue, 24 Oct 2017 23:52:56 GMT']
       expires: ['-1']
-      location: ['https://management.azure.com/subscriptions/00000000-0000-0000-0000-000000000000/operationresults/eyJqb2JJZCI6IlJFU09VUkNFR1JPVVBERUxFVElPTkpPQi1DTElURVNUOjJFUkdEWFJRWlhYUFNCUjc0NkZNSDZTSkxVQ1hHUFRINzM0QUJKNnwwNjQxM0UwMjcyMUZGN0E0LVdFU1RVUyIsImpvYkxvY2F0aW9uIjoid2VzdHVzIn0?api-version=2017-05-10']
+      location: ['https://management.azure.com/subscriptions/00000000-0000-0000-0000-000000000000/operationresults/eyJqb2JJZCI6IlJFU09VUkNFR1JPVVBERUxFVElPTkpPQi1DTElURVNUOjJFUkdFNU1JSzRJRDZQNUc2NlpDTTVKU1Y0SEpTSUhTTFpENU1LWnxCMDlDOTQzMTIyRDg1QUQ3LVdFU1RVUyIsImpvYkxvY2F0aW9uIjoid2VzdHVzIn0?api-version=2017-05-10']
       pragma: [no-cache]
       strict-transport-security: [max-age=31536000; includeSubDomains]
-      x-ms-ratelimit-remaining-subscription-writes: ['1199']
+      x-ms-ratelimit-remaining-subscription-writes: ['1193']
     status: {code: 202, message: Accepted}
 version: 1

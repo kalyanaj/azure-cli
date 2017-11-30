@@ -70,7 +70,7 @@ register_resource_parameter('monitor alert update', 'target', 'Target Resource',
 
 for item in ['show-incident', 'list-incidents']:
     register_cli_argument('monitor alert {}'.format(item), 'rule_name', options_list=['--rule-name'], id_part='name')
-    register_cli_argument('monitor alert {}'.format(item), 'incident_name', name_arg_type, id_part='child_name')
+    register_cli_argument('monitor alert {}'.format(item), 'incident_name', name_arg_type, id_part='child_name_1')
 
 register_cli_argument('monitor alert list-incidents', 'rule_name', options_list=['--rule-name'], id_part=None)
 
@@ -153,3 +153,63 @@ with ParametersContext(command='monitor activity-log list') as c:
     c.argument('end_time', arg_group=filter_arg_group_name)
     c.argument('caller', arg_group=filter_arg_group_name)
     c.argument('status', arg_group=filter_arg_group_name)
+
+
+register_cli_argument('monitor action-group', 'action_group_name', options_list=('--name', '-n'), id_part='name')
+
+with ParametersContext(command='monitor action-group create') as c:
+    from .validators import process_action_group_detail_for_creation
+    from .actions import ActionGroupReceiverParameterAction
+
+    c.extra('receivers', options_list=('--action', '-a'), nargs='+', arg_group='Actions',
+            action=ActionGroupReceiverParameterAction, validator=process_action_group_detail_for_creation)
+    c.extra('short_name')
+    c.extra('tags')
+    c.ignore('action_group')
+
+with ParametersContext(command='monitor action-group update') as c:
+    c.extra('add_receivers', options_list=('--add-action', '-a'), nargs='+', arg_group='Actions',
+            action=ActionGroupReceiverParameterAction)
+    c.extra('remove_receivers', options_list=('--remove-action', '-r'), nargs='+', arg_group='Actions')
+    c.ignore('action_group')
+
+with ParametersContext(command='monitor action-group enable-receiver') as c:
+    c.register_alias('receiver_name', ('--name', '-n'))
+    c.register_alias('action_group_name', options_list='--action-group')
+
+register_cli_argument('monitor activity-log alert', 'activity_log_alert_name', options_list=('--name', '-n'),
+                      id_part='name')
+
+with ParametersContext(command='monitor activity-log alert create') as c:
+    from .activity_log_alerts import webhook_prop_type, process_condition_parameter
+    c.register('disable', options_list='--disable', action='store_true')
+    c.register('scopes', options_list=('--scope', '-s'), nargs='+')
+    c.register('condition', options_list=('--condition', '-c'), nargs='+', validator=process_condition_parameter)
+    c.register('action_groups', options_list=('--action-group', '-a'), nargs='+')
+    c.register('webhook_properties', options_list=('--webhook-properties', '-w'), arg_type=webhook_prop_type)
+
+with ParametersContext(command='monitor activity-log alert update-condition') as c:
+    c.register('reset', options_list='--reset', action='store_true')
+    c.register('add_conditions', options_list=('--add-condition', '-a'), nargs='+')
+    c.register('remove_conditions', options_list=('--remove-condition', '-r'), nargs='+')
+
+with ParametersContext(command='monitor activity-log alert update') as c:
+    from .activity_log_alerts import process_condition_parameter
+    c.register('condition', options_list=('--condition', '-c'), nargs='+', validator=process_condition_parameter)
+    c.register('enabled', options_list='--enabled', **three_state_flag())
+
+with ParametersContext(command='monitor activity-log alert action-group add') as c:
+    from .activity_log_alerts import webhook_prop_type
+    c.register('reset', options_list='--reset', action='store_true')
+    c.register('action_group_ids', options_list=('--action-group', '-a'), nargs='+')
+    c.register('webhook_properties', options_list=('--webhook-properties', '-w'), arg_type=webhook_prop_type)
+
+with ParametersContext(command='monitor activity-log alert action-group remove') as c:
+    c.register('action_group_ids', options_list=('--action-group', '-a'), nargs='+')
+
+with ParametersContext(command='monitor activity-log alert scope add') as c:
+    c.register('scopes', options_list=('--scope', '-s'), nargs='+')
+    c.register('reset', options_list='--reset', action='store_true')
+
+with ParametersContext(command='monitor activity-log alert scope remove') as c:
+    c.register('scopes', options_list=('--scope', '-s'), nargs='+')

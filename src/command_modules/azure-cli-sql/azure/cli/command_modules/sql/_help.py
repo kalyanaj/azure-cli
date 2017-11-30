@@ -46,6 +46,13 @@ helps['sql db show'] = """
     type: command
     short-summary: Get the details for a database.
     """
+helps['sql db show-connection-string'] = """
+    type: command
+    short-summary: Generates a connection string to a database.
+    examples:
+        - name: Generate connection string for ado.net
+          text: az sql db show-connection-string -s myserver -n mydb -c ado.net
+    """
 helps['sql db update'] = """
     type: command
     short-summary: Update a database.
@@ -89,6 +96,16 @@ helps['sql db audit-policy update'] = """
           text: az sql db audit-policy update -g mygroup -s myserver -n mydb --remove auditActionsAndGroups 0
         - name: Disable an auditing policy.
           text: az sql db audit-policy update -g mygroup -s myserver -n mydb --state Disabled
+    """
+helps['sql db op'] = """
+    type: group
+    short-summary: Manage operations on a database.
+    """
+helps['sql db op cancel'] = """
+    type: command
+    examples:
+        - name: Cancel an operation.
+          text: az sql db op cancel -g mygroup -s myserver -d mydb -n d2896db1-2ba8-4c84-bac1-387c430cce40
     """
 helps['sql db replica'] = """
     type: group
@@ -185,6 +202,14 @@ helps['sql db threat-policy update'] = """
         - name: Disable a threat policy.
           text: az sql db threat-policy update -g mygroup -s myserver -n mydb --state Disabled
     """
+helps['sql db tde'] = """
+            type: group
+            short-summary: Manage a database's transparent data encryption.
+            """
+helps['sql db tde set'] = """
+            type: command
+            short-summary: Sets a database's transparent data encryption configuration.
+            """
 helps['sql dw'] = """
     type: group
     short-summary: Manage data warehouses.
@@ -278,6 +303,30 @@ helps['sql server firewall-rule show'] = """
 helps['sql server firewall-rule list'] = """
     type: command
     short-summary: List a server's firewall rules.
+    """
+helps['sql server key'] = """
+    type: group
+    short-summary: Manage a server's keys.
+    """
+helps['sql server key create'] = """
+    type: command
+    short-summary: Creates a server key.
+    """
+helps['sql server key show'] = """
+    type: command
+    short-summary: Shows a server key.
+    """
+helps['sql server key delete'] = """
+    type: command
+    short-summary: Deletes a server key.
+    """
+helps['sql server tde-key'] = """
+    type: group
+    short-summary: Manage a server's encryption protector.
+    """
+helps['sql server tde-key set'] = """
+    type: command
+    short-summary: Sets the server's encryption protector.
     """
 helps['sql server vnet-rule'] = """
     type: group

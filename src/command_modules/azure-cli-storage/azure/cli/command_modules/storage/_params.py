@@ -21,6 +21,7 @@ from azure.common import AzureMissingResourceHttpError
 
 from azure.cli.core.profiles import get_sdk, ResourceType, supported_api_version
 
+from .sdkutil import get_table_data_type
 from ._factory import get_storage_data_service_client
 from ._validators import \
     (get_datetime_type, get_file_path_validator, validate_metadata,
@@ -30,6 +31,7 @@ from ._validators import \
      validate_custom_domain, validate_public_access,
      process_blob_upload_batch_parameters, process_blob_download_batch_parameters,
      process_file_upload_batch_parameters, process_file_download_batch_parameters,
+     process_blob_batch_source_parameters, process_file_batch_source_parameters,
      get_content_setting_validator, validate_encryption_services, validate_accept,
      validate_key, storage_account_key_options, validate_encryption_source,
      process_file_download_namespace,
@@ -37,44 +39,35 @@ from ._validators import \
      get_source_file_or_blob_service_client, process_blob_source_uri,
      get_char_options_validator, validate_bypass, validate_subnet, page_blob_tier_validator, blob_tier_validator)
 
+DeleteSnapshot, BlockBlobService, PageBlobService, AppendBlobService = get_sdk(ResourceType.DATA_STORAGE,
+                                                                               'DeleteSnapshot',
+                                                                               'BlockBlobService',
+                                                                               'PageBlobService',
+                                                                               'AppendBlobService',
+                                                                               mod='blob')
 
-DeleteSnapshot, BlockBlobService, \
-    PageBlobService, AppendBlobService = get_sdk(ResourceType.DATA_STORAGE,
-                                                 'DeleteSnapshot',
-                                                 'BlockBlobService',
-                                                 'PageBlobService',
-                                                 'AppendBlobService',
-                                                 mod='blob')
+BlobContentSettings, ContainerPermissions, BlobPermissions, PublicAccess = get_sdk(ResourceType.DATA_STORAGE,
+                                                                                   'ContentSettings',
+                                                                                   'ContainerPermissions',
+                                                                                   'BlobPermissions',
+                                                                                   'PublicAccess',
+                                                                                   mod='blob.models')
 
+FileContentSettings, SharePermissions, FilePermissions = get_sdk(ResourceType.DATA_STORAGE,
+                                                                 'ContentSettings',
+                                                                 'SharePermissions',
+                                                                 'FilePermissions',
+                                                                 mod='file.models')
 
-BlobContentSettings, ContainerPermissions, \
-    BlobPermissions, PublicAccess = get_sdk(ResourceType.DATA_STORAGE,
-                                            'ContentSettings',
-                                            'ContainerPermissions',
-                                            'BlobPermissions',
-                                            'PublicAccess',
-                                            mod='blob.models')
+TableService, TablePayloadFormat = get_table_data_type('table', 'TableService', 'TablePayloadFormat')
 
-FileContentSettings, SharePermissions, \
-    FilePermissions = get_sdk(ResourceType.DATA_STORAGE,
-                              'ContentSettings',
-                              'SharePermissions',
-                              'FilePermissions',
-                              mod='file.models')
+AccountPermissions = get_sdk(ResourceType.DATA_STORAGE, 'common.models#AccountPermissions')
 
-TableService, TablePayloadFormat = get_sdk(ResourceType.DATA_STORAGE,
-                                           'TableService',
-                                           'TablePayloadFormat',
-                                           mod='table')
-
-AccountPermissions, BaseBlobService, \
-    FileService, QueueService, QueuePermissions = get_sdk(ResourceType.DATA_STORAGE,
-                                                          'models#AccountPermissions',
-                                                          'blob.baseblobservice#BaseBlobService',
-                                                          'file#FileService',
-                                                          'queue#QueueService',
-                                                          'queue.models#QueuePermissions')
-
+BaseBlobService, FileService, QueueService, QueuePermissions = get_sdk(ResourceType.DATA_STORAGE,
+                                                                       'blob.baseblobservice#BaseBlobService',
+                                                                       'file#FileService',
+                                                                       'queue#QueueService',
+                                                                       'queue.models#QueuePermissions')
 
 # UTILITY
 
@@ -340,6 +333,8 @@ with CommandContext('storage account create') as c:
               **model_choice_list(ResourceType.MGMT_STORAGE, 'Kind'))
     c.reg_arg('tags', tags_type)
     c.reg_arg('custom_domain', help='User domain assigned to the storage account. Name is the CNAME source.')
+    c.reg_arg('sku', help='The storage account SKU.', default=enum_default(ResourceType.MGMT_STORAGE, 'SkuName', 'standard_ragrs'),
+              **model_choice_list(ResourceType.MGMT_STORAGE, 'SkuName'))
 
 with CommandContext('storage account update') as c:
     register_common_storage_account_options(c)
@@ -457,6 +452,15 @@ register_cli_argument('storage blob download-batch', 'source', options_list=('--
 
 register_cli_argument('storage blob download-batch', 'source_container_name', ignore_type)
 
+
+# BLOB DELETE-BATCH PARAMETERS
+register_cli_argument('storage blob delete-batch', 'source', options_list=('--source', '-s'),
+                      validator=process_blob_batch_source_parameters)
+
+register_cli_argument('storage blob delete-batch', 'source_container_name', ignore_type)
+register_cli_argument('storage blob delete-batch', 'delete_snapshots', **enum_choice_list(list(delete_snapshot_types.keys())))
+
+
 # BLOB UPLOAD-BATCH PARAMETERS
 register_cli_argument('storage blob upload-batch', 'destination', options_list=('--destination', '-d'))
 register_cli_argument('storage blob upload-batch', 'source', options_list=('--source', '-s'),
@@ -525,6 +529,10 @@ with CommandContext('storage file download-batch') as c:
         with VersionConstraint(ResourceType.DATA_STORAGE, min_api='2016-05-31') as vc:
             vc.register_cli_argument('storage file download-batch', 'validate_content')
 
+# FILE DELETE-BATCH PARAMETERS
+with CommandContext('storage file delete-batch') as c:
+    c.reg_arg('source', options_list=('--source', '-s'), validator=process_file_batch_source_parameters)
+
 # FILE COPY-BATCH PARAMETERS
 with CommandContext('storage file copy start-batch') as c:
     c.reg_arg('source_client', ignore_type, validator=get_source_file_or_blob_service_client)
@@ -572,6 +580,9 @@ register_cli_argument('storage share policy', 'container_name', share_name_type)
 register_cli_argument('storage share policy', 'policy_name', options_list=('--name', '-n'), help='The stored access policy name.', completer=get_storage_acl_name_completion_list(FileService, 'container_name', 'get_share_acl'))
 
 register_cli_argument('storage share list', 'marker', ignore_type)  # https://github.com/Azure/azure-cli/issues/3745
+register_cli_argument('storage share delete', 'delete_snapshots',
+                      help='Specify the deletion strategy when the share has snapshots.',
+                      **enum_choice_list(list(delete_snapshot_types.keys())))
 
 register_cli_argument('storage directory', 'directory_name', directory_type, options_list=('--name', '-n'))
 

@@ -7,6 +7,21 @@ from azure.cli.core.help_files import helps  # pylint: disable=unused-import
 
 # pylint: disable=line-too-long
 
+helps["sf"] = """
+     type: group
+     short-summary: Manage and administer Azure Service Fabric clusters.
+"""
+
+helps["sf application"] = """
+    type: group
+    short-summary: Manage applications running on an Azure Service Fabric cluster.
+"""
+
+helps["sf cluster"] = """
+    type: group
+    short-summary: Manage an Azure Service Fabric cluster.
+"""
+
 helps["sf cluster certificate"] = """
     type: group
     short-summary: Manage a cluster certificate.
@@ -63,7 +78,7 @@ helps["sf cluster create"] = """
     examples:
         - name: Create a cluster with a given size and self-signed certificate that is downloaded locally.
           text: >
-            az sf cluster create -g group-name -n cluster1 -l westus -size 4 --vm-password Password#1234 --certificate-output-folder MyCertificates
+            az sf cluster create -g group-name -n cluster1 -l westus --cluster-size 4 --vm-password Password#1234 --certificate-output-folder MyCertificates --certificate-subject-name cluster1
         - name: Use a keyvault certificate and custom template to deploy a cluster.
           text: >
             az sf cluster create -g group-name -n cluster1 -l westus --template-file template.json \\

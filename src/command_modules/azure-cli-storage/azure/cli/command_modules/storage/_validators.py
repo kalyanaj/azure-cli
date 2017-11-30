@@ -11,12 +11,14 @@ from datetime import datetime, timedelta
 from azure.cli.core.util import CLIError
 from azure.cli.core._profile import CLOUD
 from azure.cli.core._config import az_config
-from azure.cli.core.profiles import get_sdk, ResourceType
+from azure.cli.core.profiles import get_sdk, ResourceType, supported_api_version
 from azure.cli.core.commands.client_factory import get_mgmt_service_client
 from azure.cli.core.commands.validators import validate_key_value_pairs
 
 from ._factory import get_storage_data_service_client
 from .util import glob_files_locally, guess_content_type
+from .sdkutil import get_table_data_type
+from .url_quote_util import encode_for_url
 
 storage_account_key_options = {'primary': 'key1', 'secondary': 'key2'}
 
@@ -27,7 +29,7 @@ def _query_account_key(account_name):
     scf = get_mgmt_service_client(ResourceType.MGMT_STORAGE)
     acc = next((x for x in scf.storage_accounts.list() if x.name == account_name), None)
     if acc:
-        from azure.cli.core.commands.arm import parse_resource_id
+        from msrestazure.tools import parse_resource_id
         rg = parse_resource_id(acc.id)['resource_group']
 
         (StorageAccountKeys, StorageAccountListKeysResult) = get_sdk(
@@ -44,10 +46,14 @@ def _query_account_key(account_name):
 
 
 def _create_short_lived_blob_sas(account_name, account_key, container, blob):
-    SharedAccessSignature, BlobPermissions = \
-        get_sdk(ResourceType.DATA_STORAGE,
-                'sharedaccesssignature#SharedAccessSignature',
-                'blob.models#BlobPermissions')
+    if supported_api_version(ResourceType.DATA_STORAGE, min_api='2017-04-17'):
+        SharedAccessSignature = get_sdk(ResourceType.DATA_STORAGE, 'BlobSharedAccessSignature',
+                                        mod='blob.sharedaccesssignature')
+    else:
+        SharedAccessSignature = get_sdk(ResourceType.DATA_STORAGE, 'SharedAccessSignature',
+                                        mod='sharedaccesssignature')
+
+    BlobPermissions = get_sdk(ResourceType.DATA_STORAGE, 'blob.models#BlobPermissions')
     expiry = (datetime.utcnow() + timedelta(days=1)).strftime('%Y-%m-%dT%H:%M:%SZ')
     sas = SharedAccessSignature(account_name, account_key)
     return sas.generate_blob(container, blob, permission=BlobPermissions(read=True), expiry=expiry,
@@ -55,10 +61,13 @@ def _create_short_lived_blob_sas(account_name, account_key, container, blob):
 
 
 def _create_short_lived_file_sas(account_name, account_key, share, directory_name, file_name):
-    SharedAccessSignature, BlobPermissions = \
-        get_sdk(ResourceType.DATA_STORAGE,
-                'sharedaccesssignature#SharedAccessSignature',
-                'blob.models#BlobPermissions')
+    if supported_api_version(ResourceType.DATA_STORAGE, min_api='2017-04-17'):
+        SharedAccessSignature = get_sdk(ResourceType.DATA_STORAGE, 'FileSharedAccessSignature',
+                                        mod='file.sharedaccesssignature')
+    else:
+        SharedAccessSignature = get_sdk(ResourceType.DATA_STORAGE, 'SharedAccessSignature',
+                                        mod='sharedaccesssignature')
+    BlobPermissions = get_sdk(ResourceType.DATA_STORAGE, 'blob.models#BlobPermissions')
     # if dir is empty string change it to None
     directory_name = directory_name if directory_name else None
     expiry = (datetime.utcnow() + timedelta(days=1)).strftime('%Y-%m-%dT%H:%M:%SZ')
@@ -70,7 +79,7 @@ def _create_short_lived_file_sas(account_name, account_key, share, directory_nam
 # region PARAMETER VALIDATORS
 
 def validate_accept(namespace):
-    TablePayloadFormat = get_sdk(ResourceType.DATA_STORAGE, 'table#TablePayloadFormat')
+    TablePayloadFormat = get_table_data_type('table', 'TablePayloadFormat')
     if namespace.accept:
         formats = {
             'none': TablePayloadFormat.JSON_NO_METADATA,
@@ -292,7 +301,7 @@ def validate_source_uri(namespace):  # pylint: disable=too-many-statements
         source_account_name,
         'blob' if valid_blob_source else 'file',
         container if valid_blob_source else share,
-        blob if valid_blob_source else path,
+        encode_for_url(blob if valid_blob_source else path),
         '?' if query_params else '',
         '&'.join(query_params),
         CLOUD.suffixes.storage_endpoint)
@@ -521,7 +530,7 @@ def get_permission_validator(permission_class):
 
 def table_permission_validator(namespace):
     """ A special case for table because the SDK associates the QUERY permission with 'r' """
-    TablePermissions = get_sdk(ResourceType.DATA_STORAGE, 'table#TablePermissions')
+    TablePermissions = get_table_data_type('table', 'TablePermissions')
     if namespace.permission:
         if set(namespace.permission) - set('raud'):
             help_string = '(r)ead/query (a)dd (u)pdate (d)elete'
@@ -628,12 +637,11 @@ def get_source_file_or_blob_service_client(namespace):
             raise ValueError(usage_string)
 
     elif source_uri:
-        if source_sas or source_key or ('source_container' in ns) or ('source_share' in ns):
+        if source_sas or source_key or source_container or source_share:
             raise ValueError(usage_string)
 
         from .storage_url_helpers import StorageResourceIdentifier
         identifier = StorageResourceIdentifier(source_uri)
-
         nor_container_or_share = not identifier.container and not identifier.share
         if not identifier.is_url():
             raise ValueError('incorrect usage: --source-uri expects a URI')
@@ -641,11 +649,15 @@ def get_source_file_or_blob_service_client(namespace):
                 identifier.filename or nor_container_or_share:
             raise ValueError('incorrect usage: --source-uri has to be blob container or file share')
         elif identifier.container:
-            ns['source_client'] = BlockBlobService(account_name=identifier.account_name,
-                                                   sas_token=identifier.sas_token)
+            ns['source_container'] = identifier.container
+            if identifier.account_name != ns.get('account_name'):
+                ns['source_client'] = BlockBlobService(account_name=identifier.account_name,
+                                                       sas_token=identifier.sas_token)
         elif identifier.share:
-            ns['source_client'] = FileService(account_name=identifier.account_name,
-                                              sas_token=identifier.sas_token)
+            ns['source_share'] = identifier.share
+            if identifier.account_name != ns.get('account_name'):
+                ns['source_client'] = FileService(account_name=identifier.account_name,
+                                                  sas_token=identifier.sas_token)
 
 
 # endregion
@@ -661,6 +673,13 @@ def process_blob_download_batch_parameters(namespace):
         raise ValueError('incorrect usage: destination must be an existing directory')
 
     # 2. try to extract account name and container name from source string
+    process_blob_batch_source_parameters(namespace)
+
+
+def process_blob_batch_source_parameters(namespace):
+    """Process the parameters for storage blob download command"""
+
+    # try to extract account name and container name from source string
     from .storage_url_helpers import StorageResourceIdentifier
     identifier = StorageResourceIdentifier(namespace.source)
 
@@ -694,8 +713,24 @@ def process_blob_upload_batch_parameters(namespace):
         raise ValueError('incorrect usage: destination cannot be a blob url')
     else:
         namespace.destination_container_name = identifier.container
-        if not namespace.account_name:
+
+        if namespace.account_name:
+            if namespace.account_name != identifier.account_name:
+                raise ValueError(
+                    'The given storage account name is not consistent with the account name in the destination URI')
+        else:
             namespace.account_name = identifier.account_name
+
+        if not (namespace.account_key or namespace.sas_token or namespace.connection_string):
+            validate_client_parameters(namespace)
+
+        # it is possible the account name be overwritten by the connection string
+        if namespace.account_name != identifier.account_name:
+            raise ValueError(
+                'The given storage account name is not consistent with the account name in the destination URI')
+
+        if not (namespace.account_key or namespace.sas_token or namespace.connection_string):
+            raise ValueError('Missing storage account credential information.')
 
     # 3. collect the files to be uploaded
     namespace.source = os.path.realpath(namespace.source)
@@ -755,6 +790,10 @@ def process_file_download_batch_parameters(namespace):
         raise ValueError('incorrect usage: destination must be an existing directory')
 
     # 2. try to extract account name and share name from source string
+    process_file_batch_source_parameters(namespace)
+
+
+def process_file_batch_source_parameters(namespace):
     from .storage_url_helpers import StorageResourceIdentifier
     identifier = StorageResourceIdentifier(namespace.source)
     if identifier.is_url():
@@ -777,9 +816,9 @@ def process_file_download_namespace(namespace):
 
 
 def process_metric_update_namespace(namespace):
-    namespace.hour = namespace.hour == 'enable'
-    namespace.minute = namespace.minute == 'enable'
-    namespace.api = namespace.api == 'enable' if namespace.api else None
+    namespace.hour = namespace.hour == 'true'
+    namespace.minute = namespace.minute == 'true'
+    namespace.api = namespace.api == 'true' if namespace.api else None
     if namespace.hour is None and namespace.minute is None:
         raise argparse.ArgumentError(
             None, 'incorrect usage: must specify --hour and/or --minute')
@@ -789,7 +828,7 @@ def process_metric_update_namespace(namespace):
 
 
 def validate_subnet(namespace):
-    from azure.cli.core.commands.arm import resource_id, is_valid_resource_id
+    from msrestazure.tools import resource_id, is_valid_resource_id
     from azure.cli.core.commands.client_factory import get_subscription_id
 
     subnet = namespace.subnet
@@ -805,8 +844,8 @@ def validate_subnet(namespace):
             namespace='Microsoft.Network',
             type='virtualNetworks',
             name=vnet,
-            child_type='subnets',
-            child_name=subnet)
+            child_type_1='subnets',
+            child_name_1=subnet)
     else:
         raise CLIError('incorrect usage: [--subnet ID | --subnet NAME --vnet-name NAME]')
 
@@ -849,7 +888,7 @@ def ipv4_range_type(string):
 def resource_type_type(string):
     ''' Validates that resource types string contains only a combination
     of (s)ervice, (c)ontainer, (o)bject '''
-    ResourceTypes = get_sdk(ResourceType.DATA_STORAGE, 'models#ResourceTypes')
+    ResourceTypes = get_sdk(ResourceType.DATA_STORAGE, 'common.models#ResourceTypes')
     if set(string) - set("sco"):
         raise ValueError
     return ResourceTypes(_str=''.join(set(string)))
@@ -858,7 +897,7 @@ def resource_type_type(string):
 def services_type(string):
     ''' Validates that services string contains only a combination
     of (b)lob, (q)ueue, (t)able, (f)ile '''
-    Services = get_sdk(ResourceType.DATA_STORAGE, 'models#Services')
+    Services = get_sdk(ResourceType.DATA_STORAGE, 'common.models#Services')
     if set(string) - set("bqtf"):
         raise ValueError
     return Services(_str=''.join(set(string)))

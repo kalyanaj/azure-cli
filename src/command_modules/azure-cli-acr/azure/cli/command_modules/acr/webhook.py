@@ -3,20 +3,19 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from azure.mgmt.containerregistry.v2017_06_01_preview.models import (
+from azure.mgmt.containerregistry.v2017_10_01.models import (
     WebhookCreateParameters,
     WebhookUpdateParameters
 )
 
-from ._constants import WEBHOOK_API_VERSION
 from ._factory import get_acr_service_client
 from ._utils import (
     get_resource_group_name_by_registry_name,
-    managed_registry_validation
+    validate_managed_registry
 )
 
 
-WEBHOOKS_NOT_SUPPORTED = 'Webhooks are not supported for registries in Basic SKU.'
+WEBHOOKS_NOT_SUPPORTED = 'Webhooks are only supported for managed registries.'
 
 
 def acr_webhook_list(registry_name, resource_group_name=None):
@@ -24,9 +23,9 @@ def acr_webhook_list(registry_name, resource_group_name=None):
     :param str registry_name: The name of container registry
     :param str resource_group_name: The name of resource group
     """
-    _, resource_group_name = managed_registry_validation(
+    _, resource_group_name = validate_managed_registry(
         registry_name, resource_group_name, WEBHOOKS_NOT_SUPPORTED)
-    client = get_acr_service_client(WEBHOOK_API_VERSION).webhooks
+    client = get_acr_service_client().webhooks
 
     return client.list(resource_group_name, registry_name)
 
@@ -35,6 +34,7 @@ def acr_webhook_create(webhook_name,
                        uri,
                        actions,
                        registry_name,
+                       location=None,
                        resource_group_name=None,
                        headers=None,
                        status='enabled',
@@ -45,23 +45,23 @@ def acr_webhook_create(webhook_name,
     :param str uri: The service URI for the webhook to post notifications
     :param str actions: The list of actions that trigger the webhook to post notifications
     :param str registry_name: The name of container registry
+    :param str location: The name of location
     :param str resource_group_name: The name of resource group
     :param str headers: Custom headers that will be added to the webhook notifications
     :param str status: Indicates whether the webhook is enabled
     :param str scope: The scope of repositories where the event can be triggered
     """
-    arm_registry, resource_group_name = managed_registry_validation(
+    registry, resource_group_name = validate_managed_registry(
         registry_name, resource_group_name, WEBHOOKS_NOT_SUPPORTED)
-    location = arm_registry.location
 
-    client = get_acr_service_client(WEBHOOK_API_VERSION).webhooks
+    client = get_acr_service_client().webhooks
 
     return client.create(
         resource_group_name,
         registry_name,
         webhook_name,
         WebhookCreateParameters(
-            location=location,
+            location=location or registry.location,
             service_uri=uri,
             actions=actions,
             custom_headers=headers,
@@ -80,9 +80,9 @@ def acr_webhook_delete(webhook_name,
     :param str registry_name: The name of container registry
     :param str resource_group_name: The name of resource group
     """
-    _, resource_group_name = managed_registry_validation(
+    _, resource_group_name = validate_managed_registry(
         registry_name, resource_group_name, WEBHOOKS_NOT_SUPPORTED)
-    client = get_acr_service_client(WEBHOOK_API_VERSION).webhooks
+    client = get_acr_service_client().webhooks
 
     return client.delete(resource_group_name, registry_name, webhook_name)
 
@@ -95,9 +95,9 @@ def acr_webhook_show(webhook_name,
     :param str registry_name: The name of container registry
     :param str resource_group_name: The name of resource group
     """
-    _, resource_group_name = managed_registry_validation(
+    _, resource_group_name = validate_managed_registry(
         registry_name, resource_group_name, WEBHOOKS_NOT_SUPPORTED)
-    client = get_acr_service_client(WEBHOOK_API_VERSION).webhooks
+    client = get_acr_service_client().webhooks
 
     return client.get(resource_group_name, registry_name, webhook_name)
 
@@ -161,9 +161,9 @@ def acr_webhook_get_config(webhook_name,
     :param str registry_name: The name of container registry
     :param str resource_group_name: The name of resource group
     """
-    _, resource_group_name = managed_registry_validation(
+    _, resource_group_name = validate_managed_registry(
         registry_name, resource_group_name, WEBHOOKS_NOT_SUPPORTED)
-    client = get_acr_service_client(WEBHOOK_API_VERSION).webhooks
+    client = get_acr_service_client().webhooks
 
     return client.get_callback_config(resource_group_name, registry_name, webhook_name)
 
@@ -176,9 +176,9 @@ def acr_webhook_list_events(webhook_name,
     :param str registry_name: The name of container registry
     :param str resource_group_name: The name of resource group
     """
-    _, resource_group_name = managed_registry_validation(
+    _, resource_group_name = validate_managed_registry(
         registry_name, resource_group_name, WEBHOOKS_NOT_SUPPORTED)
-    client = get_acr_service_client(WEBHOOK_API_VERSION).webhooks
+    client = get_acr_service_client().webhooks
 
     return client.list_events(resource_group_name, registry_name, webhook_name)
 
@@ -191,8 +191,8 @@ def acr_webhook_ping(webhook_name,
     :param str registry_name: The name of container registry
     :param str resource_group_name: The name of resource group
     """
-    _, resource_group_name = managed_registry_validation(
+    _, resource_group_name = validate_managed_registry(
         registry_name, resource_group_name, WEBHOOKS_NOT_SUPPORTED)
-    client = get_acr_service_client(WEBHOOK_API_VERSION).webhooks
+    client = get_acr_service_client().webhooks
 
     return client.ping(resource_group_name, registry_name, webhook_name)

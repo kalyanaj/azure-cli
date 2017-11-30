@@ -2,9 +2,32 @@
 
 Release History
 ===============
-(unreleased)
+
+2.0.18
+++++++
+* --resource parameter, resource-level locks now support resource-ids.
+
+2.0.17
+++++++
+* `group export`: Fixed incompatibility with most recent version of msrest dependency.
+* `az policy assignment create`: policy assignment create command to work with built in policy definitions and policy set definitions.
+
+2.0.16 (2017-10-09)
 +++++++++++++++++++
-* policy: support to show built-in policy definition
+* group: permit --resource-group/-g options for resource group name.
+* `account lock`: lock commands to work specifically with subscription level locks
+* `group lock`: lock commands to work specifically with group level locks
+* `resource lock`: lock command to work specifically with resource level locks
+
+2.0.15 (2017-09-22)
++++++++++++++++++++
+* policy: support to show built-in policy definition.
+* policy: support mode parameter for creating policy definitions.
+* policy: add policy set definition commands.
+* policy: add sku and policysetdefinition parameters when creating policy assignment
+* managedapp definition: support to create managedapp definition using create-ui-definition and main-template.
+* BREAKING CHANGE: managedapp: Update to latest ARM package, which includes changing resource type from appliances to applications and applianceDefinitions to applicationDefinitions.
+* resource invoke-action: supports ability to invoke any action onto resource, also supports user-specified url to post.
 
 2.0.14 (2017-09-11)
 +++++++++++++++++++

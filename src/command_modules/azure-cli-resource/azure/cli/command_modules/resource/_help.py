@@ -38,6 +38,11 @@ helps['managedapp definition create'] = """
             az managedapp definition create -g MyResourceGroup -n MyManagedAppDef -l eastus --display-name "MyManagedAppDef" \\
                 --description "My Managed App Def description" -a "myPrincipalId:myRoleId" --lock-level None \\
                 --package-file-uri "https://path/to/myPackage.zip"
+        - name: Create a managed application defintion with inline values for createUiDefinition and mainTemplate.
+          text: >
+            az managedapp definition create -g MyResourceGroup -n MyManagedAppDef -l eastus --display-name "MyManagedAppDef" \\
+                --description "My Managed App Def description" -a "myPrincipalId:myRoleId" --lock-level None \\
+                --create-ui-definition @myCreateUiDef.json --main-template @myMainTemplate.json
 """
 helps['managedapp definition delete'] = """
     type: command
@@ -58,38 +63,21 @@ helps['managedapp list'] = """
 helps['lock'] = """
     type: group
     short-summary: Manage Azure locks.
-    parameters:
-        - name: --resource-type
-          type: string
-          text: The name of the resource type. May have a provider namespace.
-        - name: --resource-provider-namespace
-          type: string
-          text: The name of the resource provider.
-        - name: --parent-resource-path
-          type: string
-          text: The path to the parent resource of the resource being locked.
-        - name: --resource-name
-          type: string
-          text: The name of the resource this lock applies to.
 """
 helps['lock create'] = """
     type: command
     short-summary: Create a lock.
     long-summary: 'Locks can exist at three different scopes: subscription, resource group and resource.'
-    parameters:
-        - name: --notes
-          type: string
-          short-summary: Notes about this lock.
     examples:
         - name: Create a read-only subscription level lock.
           text: >
             az lock create --name lockName --resource-group group --lock-type ReadOnly
     """
 helps['lock delete'] = """
-    type: commands
+    type: command
     short-summary: Delete a lock.
     examples:
-        - name: Delete a resource-group-level lock
+        - name: Delete a resource group-level lock
           text: >
             az lock delete --name lockName --resource-group group
     """
@@ -99,7 +87,7 @@ helps['lock list'] = """
     examples:
         - name: List out the locks on a vnet resource. Includes locks in the associated group and subscription.
           text: >
-            az lock list --resource-name myvnet --resource-type Microsoft.Network/virtualNetworks -g group
+            az lock list --resource myvnet --resource-type Microsoft.Network/virtualNetworks -g group
         - name: List out all locks on the subscription level
           text: >
             az lock list
@@ -115,14 +103,54 @@ helps['lock show'] = """
 helps['lock update'] = """
     type: command
     short-summary: Update a lock.
-    parameters:
-        - name: --notes
-          type: string
-          short-summary: Notes about this lock.
     examples:
-        - name: Update a resource-group level lock with new notes and type
+        - name: Update a resource group level lock with new notes and type
           text: >
             az lock update --name lockName --resource-group group --notes newNotesHere --lock-type CanNotDelete
+    """
+helps['account lock'] = """
+    type: group
+    short-summary: Manage Azure subscription level locks.
+"""
+helps['account lock create'] = """
+    type: command
+    short-summary: Create a subscription lock.
+    examples:
+        - name: Create a read-only subscription level lock.
+          text: >
+            az account lock create --lock-type ReadOnly -n lockName
+    """
+helps['account lock delete'] = """
+    type: command
+    short-summary: Delete a subscription lock.
+    examples:
+        - name: Delete a subscription lock
+          text: >
+            az account lock delete --name lockName
+    """
+helps['account lock list'] = """
+    type: command
+    short-summary: List lock information in the subscription.
+    examples:
+        - name: List out all locks on the subscription level
+          text: >
+            az account lock list
+    """
+helps['account lock show'] = """
+    type: command
+    short-summary: Show the details of a subscription lock
+    examples:
+        - name: Show a subscription level lock
+          text: >
+            az account lock show -n lockname
+    """
+helps['account lock update'] = """
+    type: command
+    short-summary: Update a subscription lock.
+    examples:
+        - name: Update a subscription lock with new notes and type
+          text: >
+            az account lock update --name lockName --notes newNotesHere --lock-type CanNotDelete
     """
 helps['policy'] = """
     type: group
@@ -167,7 +195,7 @@ helps['policy definition create'] = """
                                 }
                             }
                         }
-            """
+"""
 helps['policy definition delete'] = """
     type: command
     short-summary: Delete a policy definition.
@@ -183,6 +211,43 @@ helps['policy definition update'] = """
 helps['policy definition list'] = """
     type: command
     short-summary: List policy definitions.
+"""
+helps['policy set-definition'] = """
+    type: group
+    short-summary: Manage resource policy set definitions.
+"""
+helps['policy set-definition create'] = """
+            type: command
+            short-summary: Create a policy set definition.
+            parameters:
+                - name: --definitions
+                  type: string
+                  short-summary: Policy definitions in JSON format, or a path to a file containing JSON rules.
+            examples:
+                - name: Create a policy set definition.
+                  text: |
+                    az policy setdefinition create -n readOnlyStorage --definitions \\
+                        [ \\
+                            { \\
+                                "policyDefinitionId": "/subscriptions/mySubId/providers/Microsoft.Authorization/policyDefinitions/storagePolicy" \\
+                            } \\
+                        ]
+"""
+helps['policy set-definition delete'] = """
+    type: command
+    short-summary: Delete a policy set definition.
+"""
+helps['policy set-definition show'] = """
+    type: command
+    short-summary: get a policy set definition.
+"""
+helps['policy set-definition update'] = """
+    type: command
+    short-summary: Update a policy set definition.
+"""
+helps['policy set-definition list'] = """
+    type: command
+    short-summary: List policy set definitions.
 """
 helps['policy assignment'] = """
     type: group
@@ -250,13 +315,13 @@ helps['resource show'] = """
             az vm show -g MyResourceGroup -n MyVm --resource-type "Microsoft.Compute/virtualMachines"
         - name: Show a web app using a resource identifier.
           text: >
-            az resource show --id /subscriptions/{SubID}/resourceGroups/{MyRG}/providers/Microsoft.Web/sites/{MyWebapp}
-        - name: Show a subnet in the 'Microsoft.Network' namespace which belongs to the virtual network 'MyVnet'.
+            az resource show --ids /subscriptions/0b1f6471-1bf0-4dda-aec3-111111111111/resourceGroups/MyResourceGroup/providers/Microsoft.Web/sites/MyWebapp
+        - name: Show a subnet.
           text: >
             az resource show -g MyResourceGroup -n MySubnet --namespace Microsoft.Network --parent virtualnetworks/MyVnet --resource-type subnets
         - name: Show a subnet using a resource identifier.
           text: >
-            az resource show --id /subscriptions/{SubID}/resourceGroups/{MyRG}/providers/Microsoft.Network/virtualNetworks/{MyVnet}/subnets/{MySubnet}
+            az resource show --ids /subscriptions/0b1f6471-1bf0-4dda-aec3-111111111111/resourceGroups/MyResourceGroup/providers/Microsoft.Network/virtualNetworks/MyVnet/subnets/MySubnet
         - name: Show an application gateway path rule.
           text: >
             az resource show -g MyResourceGroup --namespace Microsoft.Network --parent applicationGateways/ag1/urlPathMaps/map1 --resource-type pathRules -n rule1
@@ -271,10 +336,10 @@ helps['resource delete'] = """
             az vm delete -g MyResourceGroup -n MyVm --resource-type "Microsoft.Compute/virtualMachines"
         - name: Delete a web app using a resource identifier.
           text: >
-            az resource delete --id /subscriptions/{SubID}/resourceGroups/{MyRG}/providers/Microsoft.Web/sites/{MyWebApp}
+            az resource delete --ids /subscriptions/0b1f6471-1bf0-4dda-aec3-111111111111/resourceGroups/MyResourceGroup/providers/Microsoft.Web/sites/MyWebapp
         - name: Delete a subnet using a resource identifier.
           text: >
-            az resource delete --id /subscriptions/{SubID}/resourceGroups/{MyRG}/providers/Microsoft.Network/virtualNetworks/{MyVNET}/subnets/{MySubnet}
+            az resource delete --ids /subscriptions/0b1f6471-1bf0-4dda-aec3-111111111111/resourceGroups/MyResourceGroup/providers/Microsoft.Network/virtualNetworks/MyVnet/subnets/MySubnet
 """
 
 helps['resource tag'] = """
@@ -317,6 +382,23 @@ helps['resource create'] = """
 helps['resource update'] = """
     type: command
     short-summary: Update a resource.
+"""
+
+helps['resource invoke-action'] = """
+    type: command
+    short-summary: Invoke an action on the resource.
+    long-summary: >
+        A list of possible actions corresponding to a resource can be found at https://docs.microsoft.com/en-us/rest/api/. All POST requests are actions that can be invoked and are specified at the end of the URI path. For instance, to stop a VM, the
+        request URI is https://management.azure.com/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.Compute/virtualMachines/{vm}/powerOff?api-version={apiVersion} and the corresponding action is `powerOff`. This can
+        be found at https://docs.microsoft.com/en-us/rest/api/compute/virtualmachines/virtualmachines-stop.
+    examples:
+       - name: Power-off a vm, specified by Id.
+         text: >
+            az resource invoke-action --action powerOff --ids /subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachines/myVM
+       - name: Capture information for a stopped vm.
+         text: >
+            az resource invoke-action --action capture --ids /subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachines/myVM --request-body
+            {\\"vhdPrefix\\":\\"myPrefix\\",\\"destinationContainerName\\":\\"myContainer\\",\\"overwriteVhds\\":\\"true\\"}
 """
 
 helps['feature'] = """
@@ -424,10 +506,63 @@ helps['group deployment operation'] = """
     type: group
     short-summary: Manage deployment operations.
 """
+helps['group lock'] = """
+    type: group
+    short-summary: Manage Azure resource group locks.
+"""
+helps['group lock create'] = """
+    type: command
+    short-summary: Create a resource group lock.
+    examples:
+        - name: Create a read-only resource group level lock.
+          text: >
+            az group lock create --lock-type ReadOnly -n lockName -g MyResourceGroup
+    """
+helps['group lock delete'] = """
+    type: command
+    short-summary: Delete a resource group lock.
+    examples:
+        - name: Delete a resource group lock
+          text: >
+            az group lock delete --name lockName -g MyResourceGroup
+    """
+helps['group lock list'] = """
+    type: command
+    short-summary: List lock information in the resource-group.
+    examples:
+        - name: List out all locks on the resource group level
+          text: >
+            az group lock list -g MyResourceGroup
+    """
+helps['group lock show'] = """
+    type: command
+    short-summary: Show the details of a resource group lock
+    examples:
+        - name: Show a resource group level lock
+          text: >
+            az group lock show -n lockname -g MyResourceGroup
+    """
+helps['group lock update'] = """
+    type: command
+    short-summary: Update a resource group lock.
+    examples:
+        - name: Update a resource group lock with new notes and type
+          text: >
+            az group lock update --name lockName -g MyResourceGroup --notes newNotesHere --lock-type CanNotDelete
+    """
 helps['provider'] = """
     type: group
     short-summary: Manage resource providers.
 """
+
+helps['provider list'] = """
+    type: command
+    examples:
+        - name: Display all resource types for the network resource provider.
+          text: >
+            az provider list --query [?namespace=='Microsoft.Network'].resourceTypes[].resourceType
+"""
+
 helps['provider register'] = """
     type: command
     short-summary: Register a provider.
@@ -507,3 +642,53 @@ helps['resource link show'] = """
           text: >
             az resource link show --link-id <link-id>
 """
+helps['resource lock'] = """
+    type: group
+    short-summary: Manage Azure resource level locks.
+"""
+helps['resource lock create'] = """
+    type: command
+    short-summary: Create a resource-level lock.
+    examples:
+        - name: Create a read-only resource level lock on a vnet.
+          text: >
+            az resource lock create --lock-type ReadOnly -n lockName -g MyResourceGroup --resource myvnet --resource-type Microsoft.Network/virtualNetworks
+        - name: Create a read-only resource level lock on a vnet using a vnet id.
+          text: >
+            az resource lock create --lock-type ReadOnly -n lockName --resource /subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/MyResourceGroup/providers/Microsoft.Network/virtualNetworks/myvnet
+    """
+helps['resource lock delete'] = """
+    type: command
+    short-summary: Delete a resource-level lock.
+    examples:
+        - name: Delete a resource level lock
+          text: >
+            az resource lock delete --name lockName -g MyResourceGroup --resource myvnet --resource-type Microsoft.Network/virtualNetworks
+        - name: Delete a resource level lock on a vnet using a vnet id.
+          text: >
+            az resource lock delete -n lockName --resource /subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/MyResourceGroup/providers/Microsoft.Network/virtualNetworks/myvnet
+    """
+helps['resource lock list'] = """
+    type: command
+    short-summary: List lock information in the resource-level.
+    examples:
+        - name: List out all locks on a vnet
+          text: >
+            az resource lock list -g MyResourceGroup --resource myvnet --resource-type Microsoft.Network/virtualNetworks
+    """
+helps['resource lock show'] = """
+    type: command
+    short-summary: Show the details of a resource-level lock
+    examples:
+        - name: Show a resource level lock
+          text: >
+            az resource lock show -n lockname -g MyResourceGroup --resource myvnet --resource-type Microsoft.Network/virtualNetworks
+    """
+helps['resource lock update'] = """
+    type: command
+    short-summary: Update a resource-level lock.
+    examples:
+        - name: Update a resource level lock with new notes and type
+          text: >
+            az resource lock update --name lockName -g MyResourceGroup --resource myvnet --resource-type Microsoft.Network/virtualNetworks --notes newNotesHere --lock-type CanNotDelete
+    """

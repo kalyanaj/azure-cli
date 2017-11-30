@@ -27,7 +27,8 @@ from azure.cli.command_modules.storage._transformers import \
 from azure.cli.core.commands import cli_command, VersionConstraint
 from azure.cli.core.commands.arm import cli_generic_update_command
 from azure.cli.core.util import empty_on_404
-from azure.cli.core.profiles import supported_api_version, get_sdk, ResourceType
+from azure.cli.core.profiles import supported_api_version, ResourceType, get_sdk
+from .sdkutil import cosmosdb_table_exists
 
 mgmt_path = 'azure.mgmt.storage.operations.storage_accounts_operations#StorageAccountsOperations.'
 custom_path = 'azure.cli.command_modules.storage.custom#'
@@ -35,13 +36,16 @@ file_service_path = 'azure.multiapi.storage.file.fileservice#FileService.'
 block_blob_path = 'azure.multiapi.storage.blob.blockblobservice#BlockBlobService.'
 page_blob_path = 'azure.multiapi.storage.blob.pageblobservice#PageBlobService.'
 base_blob_path = 'azure.multiapi.storage.blob.baseblobservice#BaseBlobService.'
-table_path = 'azure.multiapi.storage.table.tableservice#TableService.'
 queue_path = 'azure.multiapi.storage.queue.queueservice#QueueService.'
+
+if cosmosdb_table_exists():
+    table_path = 'azure.multiapi.cosmosdb.table.tableservice#TableService.'
+else:
+    table_path = 'azure.multiapi.storage.table.tableservice#TableService.'
 
 
 def _dont_fail_not_exist(ex):
-    AzureMissingResourceHttpError = \
-        get_sdk(ResourceType.DATA_STORAGE, '_error#AzureMissingResourceHttpError')
+    AzureMissingResourceHttpError = get_sdk(ResourceType.DATA_STORAGE, 'common._error#AzureMissingResourceHttpError')
     if isinstance(ex, AzureMissingResourceHttpError):
         return None
     else:
@@ -75,7 +79,7 @@ if supported_api_version(ResourceType.MGMT_STORAGE, min_api='2016-12-01'):
                                mgmt_path + 'update', factory,
                                custom_function_op=custom_path + 'update_storage_account')
 
-cli_storage_data_plane_command('storage account generate-sas', 'azure.multiapi.storage.cloudstorageaccount#CloudStorageAccount.generate_shared_access_signature', cloud_storage_account_service_factory)
+cli_storage_data_plane_command('storage account generate-sas', 'azure.multiapi.storage.common#CloudStorageAccount.generate_shared_access_signature', cloud_storage_account_service_factory)
 
 # container commands
 factory = blob_data_service_factory
@@ -111,7 +115,7 @@ cli_storage_data_plane_command('storage blob show', block_blob_path + 'get_blob_
 cli_storage_data_plane_command('storage blob update', block_blob_path + 'set_blob_properties', factory)
 cli_storage_data_plane_command('storage blob exists', base_blob_path + 'exists', factory, transform=create_boolean_result_output_transformer('exists'))
 cli_storage_data_plane_command('storage blob download', base_blob_path + 'get_blob_to_path', factory)
-cli_storage_data_plane_command('storage blob upload', custom_path + 'upload_blob', factory)
+cli_storage_data_plane_command('storage blob upload', 'azure.cli.command_modules.storage.blob#upload_blob', factory)
 cli_storage_data_plane_command('storage blob metadata show', block_blob_path + 'get_blob_metadata', factory, exception_handler=_dont_fail_not_exist)
 cli_storage_data_plane_command('storage blob metadata update', block_blob_path + 'set_blob_metadata', factory)
 cli_storage_data_plane_command('storage blob service-properties show', base_blob_path + 'get_blob_service_properties', factory, exception_handler=_dont_fail_not_exist)
@@ -125,6 +129,7 @@ cli_storage_data_plane_command('storage blob copy start-batch', 'azure.cli.comma
 cli_storage_data_plane_command('storage blob copy cancel', block_blob_path + 'abort_copy_blob', factory)
 cli_storage_data_plane_command('storage blob upload-batch', 'azure.cli.command_modules.storage.blob#storage_blob_upload_batch', factory)
 cli_storage_data_plane_command('storage blob download-batch', 'azure.cli.command_modules.storage.blob#storage_blob_download_batch', factory)
+cli_storage_data_plane_command('storage blob delete-batch', 'azure.cli.command_modules.storage.blob#storage_blob_delete_batch', factory)
 cli_storage_data_plane_command('storage blob set-tier', custom_path + 'set_blob_tier', factory)
 
 # page blob commands
@@ -150,6 +155,7 @@ cli_storage_data_plane_command('storage share policy delete', custom_path + 'del
 cli_storage_data_plane_command('storage share policy show', custom_path + 'get_acl_policy', factory)
 cli_storage_data_plane_command('storage share policy list', custom_path + 'list_acl_policies', factory, table_transformer=transform_acl_list_output)
 cli_storage_data_plane_command('storage share policy update', custom_path + 'set_acl_policy', factory)
+cli_storage_data_plane_command('storage share snapshot', file_service_path + 'snapshot_share', factory, resource_type=ResourceType.DATA_STORAGE, min_api='2017-04-17')
 
 # directory commands
 cli_storage_data_plane_command('storage directory create', file_service_path + 'create_directory', factory, transform=create_boolean_result_output_transformer('created'), table_transformer=transform_boolean_for_table)
@@ -177,6 +183,7 @@ cli_storage_data_plane_command('storage file copy start', file_service_path + 'c
 cli_storage_data_plane_command('storage file copy cancel', file_service_path + 'abort_copy_file', factory)
 cli_storage_data_plane_command('storage file upload-batch', 'azure.cli.command_modules.storage.file#storage_file_upload_batch', factory)
 cli_storage_data_plane_command('storage file download-batch', 'azure.cli.command_modules.storage.file#storage_file_download_batch', factory)
+cli_storage_data_plane_command('storage file delete-batch', 'azure.cli.command_modules.storage.file#storage_file_delete_batch', factory)
 cli_storage_data_plane_command('storage file copy start-batch', 'azure.cli.command_modules.storage.file#storage_file_copy_batch', factory)
 
 # table commands

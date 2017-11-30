@@ -2,7 +2,12 @@
 
 Release History
 ===============
-unreleased
+
+0.1.5
++++++
+* minor fixes
+
+0.1.4 (2017-09-22)
 ++++++++++++++++++
 
 * Using 0.2.0 of Python SDK

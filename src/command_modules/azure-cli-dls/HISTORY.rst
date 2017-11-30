@@ -2,6 +2,27 @@
 
 Release History
 ===============
+0.0.18
+++++++
+* Change the return type of the account list command: a list of DataLakeStoreAccount to a list of DataLakeStoreAccountBasic
+* The properties of a Basic type is a strict subset of the properties of a regular type
+
+0.0.17
+++++++
+* Minor fixes.
+
+0.0.16
+++++++
+* minor fixes
+
+0.0.15 (2017-10-09)
++++++++++++++++++++
+* minor fixes
+
+0.0.14 (2017-09-22)
++++++++++++++++++++
+* minor fixes
+
 0.0.13 (2017-08-28)
 +++++++++++++++++++
 * minor fixes

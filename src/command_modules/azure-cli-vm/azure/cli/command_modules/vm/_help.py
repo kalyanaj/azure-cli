@@ -12,7 +12,7 @@ vm_ids_example = """        - name: {0}
             az {1} --ids $(az vm list -g MyResourceGroup --query "[].id" -o tsv)
 """
 
-helps['vm format-secret'] = """
+helps['vm secret format'] = """
     type: command
     short-summary: Transform secrets into a form that can be used by VMs and VMSSes.
     examples:
@@ -24,7 +24,7 @@ helps['vm format-secret'] = """
             secrets=$(az keyvault secret list-versions --vault-name vaultname \\
               -n cert1 --query "[?attributes.enabled].id" -o tsv)
 
-            vm_secrets=$(az vm format-secret -s "$secrets")
+            vm_secrets=$(az vm secret format -s "$secrets")
 
             az vm create -g group-name -n vm-name --admin-username deploy  \\
               --image debian --secrets "$vm_secrets"
@@ -79,13 +79,16 @@ helps['vm create'] = """
             secrets=$(az keyvault secret list-versions --vault-name vaultname \\
               -n cert1 --query "[?attributes.enabled].id" -o tsv)
 
-            vm_secrets=$(az vm format-secret -s "$secrets") \n
+            vm_secrets=$(az vm secret format -s "$secrets") \n
 
             az vm create -g group-name -n vm-name --admin-username deploy  \\
               --image debian --secrets "$vm_secrets"
         - name: Create a CentOS VM with Managed Service Identity. The VM will have a 'Contributor' role with access to a storage account.
           text: >
              az vm create -n MyVm -g MyResourceGroup --image centos --assign-identity --scope /subscriptions/99999999-1bf0-4dda-aec3-cb9272f09590/MyResourceGroup/myRG/providers/Microsoft.Storage/storageAccounts/storage1
+        - name: Create a VM in an availability zone in the current resource group's region
+          text: >
+             az vm create -n MyVm -g MyResourceGroup --image Centos --zone 1
 """
 
 helps['vmss create'] = """
@@ -123,13 +126,16 @@ helps['vmss create'] = """
             secrets=$(az keyvault secret list-versions --vault-name vaultname \\
               -n cert1 --query "[?attributes.enabled].id" -o tsv)
 
-            vm_secrets=$(az vm format-secret -s "$secrets") \n
+            vm_secrets=$(az vm secret format -s "$secrets") \n
 
             az vmss create -g group-name -n vm-name --admin-username deploy  \\
               --image debian --secrets "$vm_secrets"
         - name: Create a VM scaleset with Managed Service Identity. The VM will have a 'Contributor' Role with access to a storage account.
           text: >
              az vm create -n MyVm -g MyResourceGroup --image centos --assign-identity --scope /subscriptions/99999999-1bf0-4dda-aec3-cb9272f09590/MyResourceGroup/myRG/providers/Microsoft.Storage/storageAccounts/storage1
+        - name: Create a single zone VM scaleset in the current resource group's region
+          text: >
+             az vmss create -n MyVmss -g MyResourceGroup --image Centos --zones 1
 """
 
 helps['vm availability-set create'] = """
@@ -266,6 +272,11 @@ helps['vmss update'] = """
 helps['vmss wait'] = """
     type: command
     short-summary: Place the CLI in a waiting state until a condition of a scale set is met.
+"""
+
+helps['vmss rolling-ugrade'] = """
+    type: group
+    short-summary: (PREVIEW) Manage rolling upgrades.
 """
 
 helps['vm convert'] = """
@@ -785,6 +796,34 @@ deallocate_generalize_capture = """        - name: Deallocate, generalize, and c
             az vm capture --ids ${vms_ids} --vhd-name-prefix MyPrefix
 """
 
+helps['vmss encryption'] = """
+    type: group
+    short-summary: (PREVIEW) Manage encryption of VM scale sets.
+"""
+
+helps['vmss encryption enable'] = """
+    type: command
+    short-summary: Encrypt a VM scale set with managed disks.
+    examples:
+        - name: encrypte a VM scale set using a key vault in the same resource group
+          text: >
+            az vmss encryption enable -g MyResourceGroup -n MyVm --disk-encryption-keyvault myvault
+"""
+
+helps['vmss encryption disable'] = """
+    type: command
+    short-summary: disable the encryption on a VM scale set with managed disks.
+    examples:
+        - name: disable encryption a VM scale set
+          text: >
+            az vmss encryption disable -g MyResourceGroup -n MyVm
+"""
+
+helps['vmss encryption show'] = """
+    type: command
+    short-summary: show the encryption status
+"""
+
 helps['vm capture'] = """
     type: command
     short-summary: Capture information for a stopped VM.
@@ -967,6 +1006,21 @@ helps['vm assign-identity'] = """
           text: az vm assign-identity -g MyResourceGroup -n MyVm --role Reader
 """
 
+helps['vm run-command'] = """
+    type: group
+    short-summary: (PREVIEW) Manage run commands on a Virtual Machine
+"""
+
+helps['vm run-command invoke'] = """
+    type: command
+    short-summary: run command on a vm
+    examples:
+        - name: install nginx on a vm
+          text: az vm run-command invoke -g MyResourceGroup -n MyVm --command-id RunShellScript --scripts "sudo apt-get update && sudo apt-get install -y nginx"
+        - name: invoke command with parameters
+          text: az vm run-command invoke -g MyResourceGroup -n MyVm --command-id RunShellScript --scripts 'echo $0 $1' --parameters hello world
+"""
+
 helps['vmss assign-identity'] = """
     type: command
     short-summary: Enable managed service identity on a VMSS.
@@ -1004,6 +1058,9 @@ helps['disk create'] = """
         - name: Create a managed disk by copying an existing disk or snapshot.
           text: >
             az disk create -g MyResourceGroup -n MyDisk2 --source MyDisk
+        - name: Create a disk in an availability zone in the region of "East US 2"
+          text: >
+            az disk create -n MyDisk -g MyResourceGroup --size-gb 10 --location eastus2 --zone 1
 """
 
 helps['disk list'] = """

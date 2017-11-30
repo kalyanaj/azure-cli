@@ -8,12 +8,12 @@ from collections import Counter, OrderedDict
 import mock
 
 from msrestazure.azure_exceptions import CloudError
+from msrestazure.tools import parse_resource_id, is_valid_resource_id, resource_id
 
 # pylint: disable=no-self-use,no-member,too-many-lines,unused-argument
 import azure.cli.core.azlogging as azlogging
-from azure.cli.core.commands.arm import parse_resource_id, is_valid_resource_id, resource_id
 from azure.cli.core.commands.client_factory import get_subscription_id, get_mgmt_service_client
-from azure.cli.core.commands.validators import DefaultStr
+from azure.cli.core.commands.validators import DefaultStr, DefaultInt
 
 from azure.cli.core.util import CLIError
 from azure.cli.command_modules.network._client_factory import _network_client_factory
@@ -21,12 +21,14 @@ from azure.cli.command_modules.network._util import _get_property, _set_param
 
 from azure.mgmt.dns import DnsManagementClient
 from azure.mgmt.dns.operations import RecordSetsOperations
-from azure.mgmt.dns.models import (RecordSet, AaaaRecord, ARecord, CnameRecord, MxRecord,
+from azure.mgmt.dns.models import (RecordSet, AaaaRecord, ARecord, CaaRecord, CnameRecord, MxRecord,
                                    NsRecord, PtrRecord, SoaRecord, SrvRecord, TxtRecord, Zone)
 
 from azure.cli.command_modules.network.zone_file.parse_zone_file import parse_zone_file
 from azure.cli.command_modules.network.zone_file.make_zone_file import make_zone_file
 from azure.cli.core.profiles import get_sdk, supported_api_version, ResourceType
+
+from azure.mgmt.trafficmanager.models import MonitorProtocol
 
 logger = azlogging.get_az_logger(__name__)
 
@@ -202,8 +204,7 @@ def create_application_gateway(application_gateway_name, resource_group_name, lo
         master_template.add_resource(build_public_ip_resource(public_ip_address, location,
                                                               tags,
                                                               public_ip_address_allocation,
-                                                              None,
-                                                              None))
+                                                              None, None, None))
         public_ip_id = '{}/publicIPAddresses/{}'.format(network_id_template,
                                                         public_ip_address)
 
@@ -263,7 +264,7 @@ def update_ag_authentication_certificate(instance, parent, item_name, cert_data)
 
 
 def create_ag_backend_address_pool(resource_group_name, application_gateway_name, item_name,
-                                   servers, no_wait=False):
+                                   servers=None, no_wait=False):
     ApplicationGatewayBackendAddressPool = get_sdk(
         ResourceType.MGMT_NETWORK,
         'ApplicationGatewayBackendAddressPool',
@@ -853,6 +854,22 @@ def list_ag_waf_rule_sets(client, _type=None, version=None, group=None):
 
 # endregion
 
+# region Application Security Group commands
+
+def create_asg(client, resource_group_name, application_security_group_name, location=None, tags=None):
+    ApplicationSecurityGroup = get_sdk(ResourceType.MGMT_NETWORK, 'ApplicationSecurityGroup', mod='models')
+    asg = ApplicationSecurityGroup(location=location, tags=tags)
+    return client.create_or_update(resource_group_name, application_security_group_name, asg)
+
+
+def update_asg(instance, tags=None):
+    if tags is not None:
+        instance.tags = tags
+    return instance
+
+# endregion
+
+
 # region Load Balancer subresource commands
 
 def create_load_balancer(load_balancer_name, resource_group_name, location=None, tags=None,
@@ -862,7 +879,7 @@ def create_load_balancer(load_balancer_name, resource_group_name, location=None,
                          public_ip_dns_name=None, subnet=None, subnet_address_prefix='10.0.0.0/24',
                          virtual_network_name=None, vnet_address_prefix='10.0.0.0/16',
                          public_ip_address_type=None, subnet_type=None, validate=False,
-                         no_wait=False, sku=None):
+                         no_wait=False, sku=None, frontend_ip_zone=None, public_ip_zone=None):
     from azure.cli.core.util import random_string
     from azure.cli.command_modules.network._template_builder import \
         (ArmTemplateBuilder, build_load_balancer_resource, build_public_ip_resource,
@@ -905,13 +922,14 @@ def create_load_balancer(load_balancer_name, resource_group_name, location=None,
                                                               tags,
                                                               public_ip_address_allocation,
                                                               public_ip_dns_name,
-                                                              sku))
+                                                              sku, public_ip_zone))
         public_ip_id = '{}/publicIPAddresses/{}'.format(network_id_template,
                                                         public_ip_address)
 
     load_balancer_resource = build_load_balancer_resource(
         load_balancer_name, location, tags, backend_pool_name, frontend_ip_name,
-        public_ip_id, subnet_id, private_ip_address, private_ip_allocation, sku)
+        public_ip_id, subnet_id, private_ip_address, private_ip_allocation, sku,
+        frontend_ip_zone)
     load_balancer_resource['dependsOn'] = lb_dependencies
     master_template.add_resource(load_balancer_resource)
     master_template.add_output('loadBalancer', load_balancer_name, output_type='object')
@@ -1006,7 +1024,7 @@ def set_lb_inbound_nat_pool(
 def create_lb_frontend_ip_configuration(
         resource_group_name, load_balancer_name, item_name, public_ip_address=None,
         subnet=None, virtual_network_name=None, private_ip_address=None,
-        private_ip_address_allocation='dynamic'):
+        private_ip_address_allocation='dynamic', zone=None):
     ncf = _network_client_factory()
     lb = ncf.load_balancers.get(resource_group_name, load_balancer_name)
     new_config = FrontendIPConfiguration(
@@ -1015,6 +1033,10 @@ def create_lb_frontend_ip_configuration(
         private_ip_allocation_method=private_ip_address_allocation,
         public_ip_address=PublicIPAddress(public_ip_address) if public_ip_address else None,
         subnet=Subnet(subnet) if subnet else None)
+
+    if zone and supported_api_version(ResourceType.MGMT_NETWORK, min_api='2017-06-01'):
+        new_config.zones = zone
+
     _upsert(lb, 'frontend_ip_configurations', new_config, 'name')
     poller = ncf.load_balancers.create_or_update(resource_group_name, load_balancer_name, lb)
     return _get_property(poller.result().frontend_ip_configurations, item_name)
@@ -1144,7 +1166,8 @@ def create_nic(resource_group_name, network_interface_name, subnet, location=Non
                load_balancer_inbound_nat_rule_ids=None,
                load_balancer_name=None, network_security_group=None,
                private_ip_address=None, private_ip_address_version=None,
-               public_ip_address=None, virtual_network_name=None, enable_accelerated_networking=None):
+               public_ip_address=None, virtual_network_name=None, enable_accelerated_networking=None,
+               application_security_groups=None):
     client = _network_client_factory().network_interfaces
     NetworkInterface = get_sdk(ResourceType.MGMT_NETWORK, 'NetworkInterface', mod='models')
 
@@ -1173,6 +1196,8 @@ def create_nic(resource_group_name, network_interface_name, subnet, location=Non
     }
     if supported_api_version(ResourceType.MGMT_NETWORK, min_api='2016-09-01'):
         ip_config_args['private_ip_address_version'] = private_ip_address_version
+    if supported_api_version(ResourceType.MGMT_NETWORK, min_api='2017-09-01'):
+        ip_config_args['application_security_groups'] = application_security_groups
     ip_config = NetworkInterfaceIPConfiguration(**ip_config_args)
 
     if public_ip_address:
@@ -1213,7 +1238,8 @@ def create_nic_ip_config(resource_group_name, network_interface_name, ip_config_
                          private_ip_address=None,
                          private_ip_address_allocation=IPAllocationMethod.dynamic.value,
                          private_ip_address_version=None,
-                         make_primary=False):
+                         make_primary=False,
+                         application_security_groups=None):
     ncf = _network_client_factory()
     nic = ncf.network_interfaces.get(resource_group_name, network_interface_name)
 
@@ -1238,6 +1264,8 @@ def create_nic_ip_config(resource_group_name, network_interface_name, ip_config_
     if supported_api_version(ResourceType.MGMT_NETWORK, min_api='2016-09-01'):
         new_config_args['private_ip_address_version'] = private_ip_address_version
         new_config_args['primary'] = make_primary
+    if supported_api_version(ResourceType.MGMT_NETWORK, min_api='2017-09-01'):
+        new_config_args['application_security_groups'] = application_security_groups
     new_config = NetworkInterfaceIPConfiguration(**new_config_args)
 
     _upsert(nic, 'ip_configurations', new_config, 'name')
@@ -1251,7 +1279,8 @@ def set_nic_ip_config(instance, parent, ip_config_name, subnet=None,
                       load_balancer_backend_address_pool_ids=None,
                       load_balancer_inbound_nat_rule_ids=None,
                       private_ip_address=None, private_ip_address_allocation=None,
-                      private_ip_address_version='ipv4', make_primary=False):
+                      private_ip_address_version='ipv4', make_primary=False,
+                      application_security_groups=None):
     if make_primary:
         for config in parent.ip_configurations:
             config.primary = False
@@ -1287,6 +1316,11 @@ def set_nic_ip_config(instance, parent, ip_config_name, subnet=None,
         instance.load_balancer_inbound_nat_rules = None
     elif load_balancer_inbound_nat_rule_ids is not None:
         instance.load_balancer_inbound_nat_rules = load_balancer_inbound_nat_rule_ids
+
+    if application_security_groups == ['']:
+        instance.application_security_groups = None
+    elif application_security_groups:
+        instance.application_security_groups = application_security_groups
 
     return parent
 
@@ -1377,12 +1411,21 @@ def _create_singular_or_plural_property(kwargs, val, singular_name, plural_name)
         kwargs[plural_name] = None
 
 
+def _handle_asg_property(kwargs, key, asgs):
+    prefix = key.split('_', 1)[0] + '_'
+    if asgs:
+        kwargs[key] = asgs
+        if kwargs[prefix + 'address_prefix'].is_default:
+            kwargs[prefix + 'address_prefix'] = ''
+
+
 def create_nsg_rule_2017_06_01(resource_group_name, network_security_group_name, security_rule_name,
                                priority, description=None, protocol=SecurityRuleProtocol.asterisk.value,
                                access=SecurityRuleAccess.allow.value,
                                direction=SecurityRuleDirection.inbound.value,
-                               source_port_ranges='*', source_address_prefixes='*',
-                               destination_port_ranges=80, destination_address_prefixes='*'):
+                               source_port_ranges=DefaultStr('*'), source_address_prefixes=DefaultStr('*'),
+                               destination_port_ranges=DefaultInt(80), destination_address_prefixes=DefaultStr('*'),
+                               source_asgs=None, destination_asgs=None):
     kwargs = {
         'protocol': protocol,
         'direction': direction,
@@ -1403,6 +1446,10 @@ def create_nsg_rule_2017_06_01(resource_group_name, network_security_group_name,
     # workaround for issue https://github.com/Azure/azure-rest-api-specs/issues/1591
     kwargs['source_address_prefix'] = kwargs['source_address_prefix'] or ''
     kwargs['destination_address_prefix'] = kwargs['destination_address_prefix'] or ''
+
+    if supported_api_version(ResourceType.MGMT_NETWORK, min_api='2017-09-01'):
+        _handle_asg_property(kwargs, 'source_application_security_groups', source_asgs)
+        _handle_asg_property(kwargs, 'destination_application_security_groups', destination_asgs)
 
     settings = SecurityRule(**kwargs)
     ncf = _network_client_factory()
@@ -1448,7 +1495,8 @@ def _update_singular_or_plural_property(instance, val, singular_name, plural_nam
 
 def update_nsg_rule_2017_06_01(instance, protocol=None, source_address_prefixes=None,
                                destination_address_prefixes=None, access=None, direction=None, description=None,
-                               source_port_ranges=None, destination_port_ranges=None, priority=None):
+                               source_port_ranges=None, destination_port_ranges=None, priority=None,
+                               source_asgs=None, destination_asgs=None):
     # No client validation as server side returns pretty good errors
     instance.protocol = protocol if protocol is not None else instance.protocol
     instance.access = access if access is not None else instance.access
@@ -1468,6 +1516,16 @@ def update_nsg_rule_2017_06_01(instance, protocol=None, source_address_prefixes=
     # workaround for issue https://github.com/Azure/azure-rest-api-specs/issues/1591
     instance.source_address_prefix = instance.source_address_prefix or ''
     instance.destination_address_prefix = instance.destination_address_prefix or ''
+
+    if source_asgs == ['']:
+        instance.source_application_security_groups = None
+    elif source_asgs:
+        instance.source_application_security_groups = source_asgs
+
+    if destination_asgs == ['']:
+        instance.destination_application_security_groups = None
+    elif destination_asgs:
+        instance.destination_application_security_groups = destination_asgs
 
     return instance
 
@@ -1502,7 +1560,7 @@ update_nsg_rule_2017_03_01.__doc__ = SecurityRule.__doc__
 
 def create_public_ip(resource_group_name, public_ip_address_name, location=None, tags=None,
                      allocation_method=None, dns_name=None,
-                     idle_timeout=4, reverse_fqdn=None, version=None, sku=None):
+                     idle_timeout=4, reverse_fqdn=None, version=None, sku=None, zone=None):
     client = _network_client_factory().public_ip_addresses
     if not allocation_method:
         allocation_method = IPAllocationMethod.static.value if (sku and sku.lower() == 'standard') \
@@ -1517,6 +1575,8 @@ def create_public_ip(resource_group_name, public_ip_address_name, location=None,
     }
     if supported_api_version(ResourceType.MGMT_NETWORK, min_api='2016-09-01'):
         public_ip_args['public_ip_address_version'] = version
+    if supported_api_version(ResourceType.MGMT_NETWORK, min_api='2017-06-01'):
+        public_ip_args['zones'] = zone
     if sku:
         public_ip_args['sku'] = {'name': sku}
     public_ip = PublicIPAddress(**public_ip_args)
@@ -1587,28 +1647,40 @@ create_vnet_peering.__doc__ = VirtualNetworkPeering.__doc__
 # pylint: disable=too-many-locals
 def create_vnet(resource_group_name, vnet_name, vnet_prefixes='10.0.0.0/16',
                 subnet_name=None, subnet_prefix=None, dns_servers=None,
-                location=None, tags=None):
+                location=None, tags=None, vm_protection=None, ddos_protection=None):
     client = _network_client_factory().virtual_networks
     tags = tags or {}
     vnet = VirtualNetwork(
         location=location, tags=tags,
         dhcp_options=DhcpOptions(dns_servers),
-        address_space=AddressSpace(
-            vnet_prefixes if isinstance(vnet_prefixes, list) else [vnet_prefixes]))
+        address_space=AddressSpace(vnet_prefixes if isinstance(vnet_prefixes, list) else [vnet_prefixes]))
     if subnet_name:
         vnet.subnets = [Subnet(name=subnet_name, address_prefix=subnet_prefix)]
+    if supported_api_version(ResourceType.MGMT_NETWORK, min_api='2017-09-01'):
+        vnet.enable_ddos_protection = ddos_protection
+        vnet.enable_vm_protection = vm_protection
     return client.create_or_update(resource_group_name, vnet_name, vnet)
 
 
-def update_vnet(instance, vnet_prefixes=None, dns_servers=None):
+def update_vnet(instance, vnet_prefixes=None, dns_servers=None, ddos_protection=None, vm_protection=None):
     # server side validation reports pretty good error message on invalid CIDR,
     # so we don't validate at client side
-    if vnet_prefixes:
+    if vnet_prefixes and instance.address_space:
         instance.address_space.address_prefixes = vnet_prefixes
+    elif vnet_prefixes:
+        instance.address_space = AddressSpace(vnet_prefixes)
+
     if dns_servers == ['']:
         instance.dhcp_options.dns_servers = None
-    elif dns_servers:
+    elif dns_servers and instance.dhcp_options:
         instance.dhcp_options.dns_servers = dns_servers
+    elif dns_servers:
+        instance.dhcp_options = DhcpOptions(dns_servers=dns_servers)
+
+    if ddos_protection is not None:
+        instance.enable_ddos_protection = ddos_protection
+    if vm_protection is not None:
+        instance.enable_vm_protection = vm_protection
     return instance
 
 
@@ -2478,14 +2550,14 @@ def list_traffic_manager_profiles(resource_group_name=None):
     from azure.mgmt.trafficmanager import TrafficManagerManagementClient
     client = get_mgmt_service_client(TrafficManagerManagementClient).profiles
     if resource_group_name:
-        return client.list_by_in_resource_group(resource_group_name)
+        return client.list_by_resource_group(resource_group_name)
 
-    return client.list_all()
+    return client.list_by_subscription()
 
 
 def create_traffic_manager_profile(traffic_manager_profile_name, resource_group_name,
                                    routing_method, unique_dns_name, monitor_path='/',
-                                   monitor_port=80, monitor_protocol='http', status='enabled',
+                                   monitor_port=80, monitor_protocol=MonitorProtocol.http.value, status='enabled',
                                    ttl=30, tags=None):
     from azure.mgmt.trafficmanager import TrafficManagerManagementClient
     from azure.mgmt.trafficmanager.models import Profile, DnsConfig, MonitorConfig
@@ -2517,6 +2589,12 @@ def update_traffic_manager_profile(instance, profile_status=None, routing_method
     if monitor_path is not None:
         instance.monitor_config.path = monitor_path
 
+    # TODO: Remove workaround after https://github.com/Azure/azure-rest-api-specs/issues/1940 fixed
+    for endpoint in instance.endpoints:
+        endpoint._validation = {
+            'name': {'readonly': False},
+            'type': {'readonly': False},
+        }
     return instance
 
 
@@ -2578,17 +2656,36 @@ def list_traffic_manager_endpoints(resource_group_name, profile_name, endpoint_t
 # region DNS Commands
 
 def create_dns_zone(client, resource_group_name, zone_name, location='global', tags=None,
-                    if_none_match=False):
-    kwargs = {
-        'resource_group_name': resource_group_name,
-        'zone_name': zone_name,
-        'parameters': Zone(location=location, tags=tags)
-    }
+                    if_none_match=False, zone_type=None, resolution_vnets=None, registration_vnets=None):
+    zone = Zone(location=location, tags=tags)
 
-    if if_none_match:
-        kwargs['if_none_match'] = '*'
+    if hasattr(zone, 'zone_type'):
+        zone.zone_type = zone_type
+        zone.registration_virtual_networks = registration_vnets
+        zone.resolution_virtual_networks = resolution_vnets
 
-    return client.create_or_update(**kwargs)
+    return client.create_or_update(resource_group_name, zone_name, zone, if_none_match='*' if if_none_match else None)
+
+
+def update_dns_zone(instance, tags=None, zone_type=None, resolution_vnets=None, registration_vnets=None):
+
+    if tags is not None:
+        instance.tags = tags
+
+    if zone_type:
+        instance.zone_type = zone_type
+
+    if resolution_vnets == ['']:
+        instance.resolution_virtual_networks = None
+    elif resolution_vnets:
+        instance.resolution_virtual_networks = resolution_vnets
+
+    if registration_vnets == ['']:
+        instance.registration_virtual_networks = None
+    elif registration_vnets:
+        instance.registration_virtual_networks = registration_vnets
+
+    return instance
 
 
 def list_dns_zones(resource_group_name=None):
@@ -2602,7 +2699,7 @@ def list_dns_zones(resource_group_name=None):
 def create_dns_record_set(resource_group_name, zone_name, record_set_name, record_set_type,
                           metadata=None, if_match=None, if_none_match=None, ttl=3600):
     ncf = get_mgmt_service_client(DnsManagementClient).record_sets
-    record_set = RecordSet(name=record_set_name, type=record_set_type, ttl=ttl, metadata=metadata)
+    record_set = RecordSet(ttl=ttl, metadata=metadata)
     return ncf.create_or_update(resource_group_name, zone_name, record_set_name,
                                 record_set_type, record_set, if_match=if_match,
                                 if_none_match='*' if if_none_match else None)
@@ -2628,6 +2725,7 @@ def _type_to_property_name(key):
     type_dict = {
         'a': 'arecords',
         'aaaa': 'aaaa_records',
+        'caa': 'caa_records',
         'cname': 'cname_record',
         'mx': 'mx_records',
         'ns': 'ns_records',
@@ -2679,6 +2777,8 @@ def export_zone(resource_group_name, zone_name):
                 record_obj.update({'ip': record.ipv6_address})
             elif record_type == 'a':
                 record_obj.update({'ip': record.ipv4_address})
+            elif record_type == 'caa':
+                record_obj.update({'value': record.value, 'tag': record.tag, 'flags': record.flags})
             elif record_type == 'cname':
                 record_obj.update({'alias': record.cname})
             elif record_type == 'mx':
@@ -2715,6 +2815,8 @@ def _build_record(data):
             return AaaaRecord(data['ip'])
         elif record_type == 'a':
             return ARecord(data['ip'])
+        elif record_type == 'caa':
+            return CaaRecord(value=data['value'], flags=data['flags'], tag=data['tag'])
         elif record_type == 'cname':
             return CnameRecord(data['alias'])
         elif record_type == 'mx':
@@ -2772,19 +2874,16 @@ def import_zone(resource_group_name, zone_name, file_name):
                             'imported at this time. Skipping...', relative_record_set_name)
                         continue
 
-                    if record_set_type != 'soa' and relative_record_set_name != origin:
-                        relative_record_set_name = record_set_name[:-(len(origin) + 2)]
-
-                    record_set = RecordSet(
-                        name=relative_record_set_name, type=record_set_type, ttl=record_set_ttl)
+                    record_set = RecordSet(ttl=record_set_ttl)
                     record_sets[record_set_key] = record_set
                 _add_record(record_set, record, record_set_type,
                             is_list=record_set_type.lower() not in ['soa', 'cname'])
 
     total_records = 0
-    for rs in record_sets.values():
+    for key, rs in record_sets.items():
+        rs_type = key.rsplit('.', 1)[1].lower()
         try:
-            record_count = len(getattr(rs, _type_to_property_name(rs.type)))
+            record_count = len(getattr(rs, _type_to_property_name(rs_type)))
         except TypeError:
             record_count = 1
         total_records += record_count
@@ -2793,31 +2892,30 @@ def import_zone(resource_group_name, zone_name, file_name):
     client = get_mgmt_service_client(DnsManagementClient)
     print('== BEGINNING ZONE IMPORT: {} ==\n'.format(zone_name), file=sys.stderr)
     client.zones.create_or_update(resource_group_name, zone_name, Zone('global'))
-    for rs in record_sets.values():
+    for key, rs in record_sets.items():
 
-        rs.type = rs.type.lower()
-        rs.name = '@' if rs.name == origin else rs.name
+        rs_name, rs_type = key.lower().rsplit('.', 1)
+        rs_name = rs_name[:-(len(origin) + 1)] if rs_name != origin else '@'
 
         try:
-            record_count = len(getattr(rs, _type_to_property_name(rs.type)))
+            record_count = len(getattr(rs, _type_to_property_name(rs_type)))
         except TypeError:
             record_count = 1
-        if rs.name == '@' and rs.type == 'soa':
+        if rs_name == '@' and rs_type == 'soa':
             root_soa = client.record_sets.get(resource_group_name, zone_name, '@', 'SOA')
             rs.soa_record.host = root_soa.soa_record.host
-            rs.name = '@'
-        elif rs.name == '@' and rs.type == 'ns':
+            rs_name = '@'
+        elif rs_name == '@' and rs_type == 'ns':
             root_ns = client.record_sets.get(resource_group_name, zone_name, '@', 'NS')
             root_ns.ttl = rs.ttl
             rs = root_ns
-            rs.type = rs.type.rsplit('/', 1)[1]
+            rs_type = rs.type.rsplit('/', 1)[1]
         try:
             client.record_sets.create_or_update(
-                resource_group_name, zone_name, rs.name, rs.type, rs)
+                resource_group_name, zone_name, rs_name, rs_type, rs)
             cum_records += record_count
             print("({}/{}) Imported {} records of type '{}' and name '{}'"
-                  .format(cum_records, total_records, record_count, rs.type, rs.name),
-                  file=sys.stderr)
+                  .format(cum_records, total_records, record_count, rs_type, rs_name), file=sys.stderr)
         except CloudError as ex:
             logger.error(ex)
     print("\n== {}/{} RECORDS IMPORTED SUCCESSFULLY: '{}' =="
@@ -2835,6 +2933,12 @@ def add_dns_a_record(resource_group_name, zone_name, record_set_name, ipv4_addre
     record_type = 'a'
     return _add_save_record(record, record_type, record_set_name, resource_group_name, zone_name,
                             'arecords')
+
+
+def add_dns_caa_record(resource_group_name, zone_name, record_set_name, value, flags, tag):
+    record = CaaRecord(flags=flags, tag=tag, value=value)
+    record_type = 'caa'
+    return _add_save_record(record, record_type, record_set_name, resource_group_name, zone_name)
 
 
 def add_dns_cname_record(resource_group_name, zone_name, record_set_name, cname):
@@ -2924,6 +3028,14 @@ def remove_dns_a_record(resource_group_name, zone_name, record_set_name, ipv4_ad
                           keep_empty_record_set=keep_empty_record_set)
 
 
+def remove_dns_caa_record(resource_group_name, zone_name, record_set_name, value,
+                          flags, tag, keep_empty_record_set=False):
+    record = CaaRecord(flags=flags, tag=tag, value=value)
+    record_type = 'caa'
+    return _remove_record(record, record_type, record_set_name, resource_group_name, zone_name,
+                          keep_empty_record_set=keep_empty_record_set)
+
+
 def remove_dns_cname_record(resource_group_name, zone_name, record_set_name, cname,
                             keep_empty_record_set=False):
     record = CnameRecord(cname=cname)
@@ -2991,7 +3103,7 @@ def _add_save_record(record, record_type, record_set_name, resource_group_name, 
     try:
         record_set = ncf.get(resource_group_name, zone_name, record_set_name, record_type)
     except CloudError:
-        record_set = RecordSet(name=record_set_name, type=record_type, ttl=3600)
+        record_set = RecordSet(ttl=3600)
 
     _add_record(record_set, record, record_type, is_list)
 

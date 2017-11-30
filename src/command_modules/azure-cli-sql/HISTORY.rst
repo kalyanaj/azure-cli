@@ -3,8 +3,23 @@
 Release History
 ===============
 
-Unreleased
-++++++++++++++++++++
+2.0.15
+++++++
+* Added --ignore-missing-vnet-service-endpoint param to az sql server vnet-rule create and update commands
+* Minor fixes.
+
+2.0.14
+++++++
+* Minor fixes
+
+2.0.13 (2017-10-09)
++++++++++++++++++++
+* Adding support for SQL Transparent Data Encryption (TDE) and TDE with Bring Your Own Key
+* Added az sql db list-deleted command and az sql db restore --deleted-time parameter, allowing the ability to find and restore deleted databases.
+* Added az sql db op list and az sql db op cancel, allowing the ability to list and cancel in-progress operations on database.
+
+2.0.12 (2017-09-22)
++++++++++++++++++++
 * az sql server list --resource-group argument is now optional. If not specified, all sql servers in the entire subscription will be returned.
 * Added --no-wait param to db create, db copy, db restore, db update, db replica create, dw create, and dw update commands
 

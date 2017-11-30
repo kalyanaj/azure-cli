@@ -48,6 +48,13 @@ def configure_common_settings(client):
     except KeyError:
         pass
 
+    try:
+        command_ext_name = APPLICATION.session['command_extension_name']
+        if command_ext_name:
+            client.config.add_user_agent("CliExtension/{}".format(command_ext_name))
+    except KeyError:
+        pass
+
     for header, value in APPLICATION.session['headers'].items():
         # We are working with the autorest team to expose the add_header functionality of the generated client to avoid
         # having to access private members
@@ -100,8 +107,7 @@ def get_data_service_client(service_type, account_name, account_key, connection_
             client_kwargs['endpoint_suffix'] = endpoint_suffix
         client = service_type(**client_kwargs)
     except ValueError as exc:
-        _ERROR_STORAGE_MISSING_INFO = \
-            get_sdk(ResourceType.DATA_STORAGE, '_error#_ERROR_STORAGE_MISSING_INFO')
+        _ERROR_STORAGE_MISSING_INFO = get_sdk(ResourceType.DATA_STORAGE, 'common._error#_ERROR_STORAGE_MISSING_INFO')
         if _ERROR_STORAGE_MISSING_INFO in str(exc):
             raise ValueError(exc)
         else:

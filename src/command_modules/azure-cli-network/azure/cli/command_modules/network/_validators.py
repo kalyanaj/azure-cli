@@ -8,7 +8,7 @@ import base64
 import socket
 import os
 
-from azure.cli.core.commands.arm import is_valid_resource_id, resource_id
+from msrestazure.tools import is_valid_resource_id, resource_id
 from azure.cli.core.commands.validators import \
     (validate_tags, get_default_location_from_resource_group)
 from azure.cli.core.util import CLIError
@@ -19,6 +19,60 @@ from azure.cli.core.profiles import ResourceType, get_sdk, get_api_version
 
 
 # PARAMETER VALIDATORS
+
+def get_asg_validator(dest):
+
+    ApplicationSecurityGroup = get_sdk(ResourceType.MGMT_NETWORK, 'ApplicationSecurityGroup', mod='models')
+
+    def _validate_asg_name_or_id(namespace):
+        subscription_id = get_subscription_id()
+        resource_group = namespace.resource_group_name
+        names_or_ids = getattr(namespace, dest)
+        ids = []
+
+        if names_or_ids == [""] or not names_or_ids:
+            return
+
+        for val in names_or_ids:
+            if not is_valid_resource_id(val):
+                val = resource_id(
+                    subscription=subscription_id,
+                    resource_group=resource_group,
+                    namespace='Microsoft.Network', type='applicationSecurityGroups',
+                    name=val
+                )
+            ids.append(ApplicationSecurityGroup(id=val))
+        setattr(namespace, dest, ids)
+
+    return _validate_asg_name_or_id
+
+
+def get_vnet_validator(dest):
+
+    SubResource = get_sdk(ResourceType.MGMT_NETWORK, 'SubResource', mod='models')
+    subscription_id = get_subscription_id()
+
+    def _validate_vnet_name_or_id(namespace):
+        resource_group = namespace.resource_group_name
+        names_or_ids = getattr(namespace, dest)
+        ids = []
+
+        if names_or_ids == [""] or not names_or_ids:
+            return
+
+        for val in names_or_ids:
+            if not is_valid_resource_id(val):
+                val = resource_id(
+                    subscription=subscription_id,
+                    resource_group=resource_group,
+                    namespace='Microsoft.Network', type='virtualNetworks',
+                    name=val
+                )
+            ids.append(SubResource(id=val))
+        setattr(namespace, dest, ids)
+
+    return _validate_vnet_name_or_id
+
 
 def dns_zone_name_type(value):
     if value:
@@ -32,8 +86,8 @@ def _generate_ag_subproperty_id(namespace, child_type, child_name, subscription=
         namespace='Microsoft.Network',
         type='applicationGateways',
         name=namespace.application_gateway_name,
-        child_type=child_type,
-        child_name=child_name)
+        child_type_1=child_type,
+        child_name_1=child_name)
 
 
 def _generate_lb_subproperty_id(namespace, child_type, child_name, subscription=None):
@@ -43,8 +97,8 @@ def _generate_lb_subproperty_id(namespace, child_type, child_name, subscription=
         namespace='Microsoft.Network',
         type='loadBalancers',
         name=namespace.load_balancer_name,
-        child_type=child_type,
-        child_name=child_name)
+        child_type_1=child_type,
+        child_name_1=child_name)
 
 
 def _generate_lb_id_list_from_names_or_ids(namespace, prop, child_type):
@@ -134,7 +188,7 @@ def validate_cert(namespace):
 
 def validate_dns_record_type(namespace):
     tokens = namespace.command.split(' ')
-    types = ['a', 'aaaa', 'cname', 'mx', 'ns', 'ptr', 'soa', 'srv', 'txt']
+    types = ['a', 'aaaa', 'caa', 'cname', 'mx', 'ns', 'ptr', 'soa', 'srv', 'txt']
     for token in tokens:
         if token in types:
             if hasattr(namespace, 'record_type'):
@@ -253,8 +307,8 @@ def get_subnet_validator(has_type_field=False, allow_none=False, allow_new=False
                 namespace='Microsoft.Network',
                 type='virtualNetworks',
                 name=namespace.virtual_network_name,
-                child_type='subnets',
-                child_name=namespace.subnet)
+                child_type_1='subnets',
+                child_name_1=namespace.subnet)
 
     def complex_validator_with_type(namespace):
 
@@ -308,8 +362,8 @@ def validate_target_listener(namespace):
             name=namespace.application_gateway_name,
             namespace='Microsoft.Network',
             type='applicationGateways',
-            child_type='httpListeners',
-            child_name=namespace.target_listener)
+            child_type_1='httpListeners',
+            child_name_1=namespace.target_listener)
 
 
 def get_virtual_network_validator(has_type_field=False, allow_none=False, allow_new=False,
@@ -665,7 +719,7 @@ def load_cert_file(param_name):
 
 
 def get_network_watcher_from_vm(namespace):
-    from azure.cli.core.commands.arm import parse_resource_id
+    from msrestazure.tools import parse_resource_id
 
     compute_client = get_mgmt_service_client(ResourceType.MGMT_COMPUTE).virtual_machines
     vm_name = parse_resource_id(namespace.vm)['name']
@@ -685,7 +739,7 @@ def get_network_watcher_from_resource(namespace):
 def get_network_watcher_from_location(remove=False, watcher_name='watcher_name',
                                       rg_name='watcher_rg'):
     def _validator(namespace):
-        from azure.cli.core.commands.arm import parse_resource_id
+        from msrestazure.tools import parse_resource_id
 
         location = namespace.location
         network_client = get_mgmt_service_client(ResourceType.MGMT_NETWORK).network_watchers
@@ -703,7 +757,7 @@ def get_network_watcher_from_location(remove=False, watcher_name='watcher_name',
 
 
 def process_nw_test_connectivity_namespace(namespace):
-    from azure.cli.core.commands.arm import parse_resource_id
+    from msrestazure.tools import parse_resource_id
 
     compute_client = get_mgmt_service_client(ResourceType.MGMT_COMPUTE).virtual_machines
     vm_name = parse_resource_id(namespace.source_resource)['name']
@@ -744,7 +798,7 @@ def process_nw_flow_log_set_namespace(namespace):
 
 
 def process_nw_flow_log_show_namespace(namespace):
-    from azure.cli.core.commands.arm import parse_resource_id
+    from msrestazure.tools import parse_resource_id
 
     if not is_valid_resource_id(namespace.nsg):
         namespace.nsg = resource_id(

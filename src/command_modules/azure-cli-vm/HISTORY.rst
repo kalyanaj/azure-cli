@@ -2,6 +2,36 @@
 
 Release History
 ===============
+2.0.18
+++++++
+* `vmss create`: fix a bug that blocks using Basic tier of VM sizes
+* `vm/vmss create`: expose `plan` arguments for using custom images with billing informations 
+* vm : support `vm secret add/remove/list`
+* vm : `vm format-secret` is copied to `vm secret format`. The old one will be removed in future
+* Minor fixes.
+
+2.0.17
+++++++
+* `vm encryption enable`: expose '--encrypt-format'
+* `vmss create`: expose '--accelerated-networking'
+
+2.0.16 (2017-10-09)
++++++++++++++++++++
+* `vm show`: fix a bug when using '-d' crashes on missing private ip addresses
+* `vmss create`: (PREVIEW) support rolling upgrade
+* `vm encryption enable`: allow updating encryption settings by rerunning the command
+* `vm create`: expose --os-disk-size-gb
+* `vmss create`: expose --license-type for windows os
+
+2.0.15 (2017-09-22)
++++++++++++++++++++
+* `vm/vmss/disk create`: support availability zone
+* `vmss create`: Fixed issue where supplying `--app-gateway ID` would fail.
+* `vm create`: Added `--asgs` support.
+* `vm run-command`: support to run commands on remote VMs
+* `vmss encryption`: (PREVIEW) support vmss disk encryptions
+* `vm perform-maintenance`: support to perform maintenance on a vm
+
 2.0.14 (2017-09-11)
 +++++++++++++++++++
 * msi: don't assign access unless `--scope` is provided

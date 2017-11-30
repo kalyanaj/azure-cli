@@ -3,6 +3,18 @@
 Release History
 ===============
 
+2.0.10
+++++++
+* `az cloud register` & `az cloud update`: Prevent users from registering clouds that have missing required endpoints
+
+2.0.9
++++++
+* minor fixes
+
+2.0.8 (2017-09-22)
+++++++++++++++++++
+* minor fixes
+
 2.0.7 (2017-07-27)
 ++++++++++++++++++
 * Change api version of cloud metadata endpoint to YYYY-MM-DD format.

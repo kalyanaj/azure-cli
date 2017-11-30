@@ -2,6 +2,29 @@
 
 Release History
 ===============
+
+2.0.19
+++++++
+* `storage account create`: defaults --sku to 'Standard_RAGRS'
+* Fixed bugs when dealing with file/blob names that include non-ascii chars.
+* `storage blob/file copy start-batch`: Fixed bug that prevented using --source-uri.
+* `storage blob/file delete-batch`: Added commands to glob and delete multiple blobs/files.
+* `storage metrics update`: fixed bug with enabling metrics.
+* `storage blob upload-batch`: Increase block size when target file is over 200GB.
+* `storage account create/update`: Fix issue where --bypass and --default-action arguments were ignored.
+
+2.0.18
+++++++
+* Minor fixes
+
+2.0.17 (2017-10-09)
++++++++++++++++++++
+* File share snapshot
+
+2.0.16 (2017-09-22)
++++++++++++++++++++
+* `storage account network-rule`: Fixed issue where commands may fail after updating the SDK.
+
 2.0.15 (2017-09-11)
 +++++++++++++++++++
 * minor fixes
@@ -20,7 +43,6 @@ Release History
 * Enable service encryption by customer managed key
 * Breaking change: rename --encryption option to --encryption-services for az storage account create and az storage account update command.
 * Fix #4220: az storage account update encryption - syntax mismatch
-
 
 2.0.12 (2017-08-11)
 +++++++++++++++++++
